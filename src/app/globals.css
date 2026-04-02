@@ -1,0 +1,306 @@
+@import "leaflet/dist/leaflet.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Custom Properties ──────────────────────────────────────────────── */
+:root {
+  --background: #080a18;
+  --surface: #101329;
+  --surface-dim: #080a18;
+  --surface-bright: #1b1f3f;
+  --surface-container-lowest: #080a18;
+  --surface-container-low: #101329;
+  --surface-container: #171a33;
+  --surface-container-high: #1f2344;
+  --surface-container-highest: #2a2f59;
+  --surface-variant: #1f2344;
+  --surface-tint: #5250fd;
+
+  --primary: #5250fd;
+  --primary-container: #6e6fbf;
+  --on-primary: #f6f7ff;
+  --on-primary-container: #ffffff;
+
+  --secondary: #6e6fbf;
+  --secondary-container: #5f60a8;
+  --on-secondary: #f2f2ff;
+  --on-secondary-container: #ffffff;
+
+  --tertiary: #a02c00;
+  --tertiary-container: #c13f0d;
+  --on-tertiary: #ffe8df;
+  --on-tertiary-container: #fff5f1;
+
+  --error: #ff8f87;
+  --error-container: #6a1513;
+  --on-error: #2a0504;
+  --on-error-container: #ffe5e2;
+
+  --on-background: #f3f4ff;
+  --on-surface: #f3f4ff;
+  --on-surface-variant: #b3b4c8;
+
+  --outline: #777682;
+  --outline-variant: #3e3f4d;
+
+  --success-green: #6ed5a4;
+
+  --radius: 9999px;
+
+  --font-public-sans: "Public Sans", sans-serif;
+  --font-lexend: "Lexend", sans-serif;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background:
+      radial-gradient(70% 55% at 12% 12%, rgba(82, 80, 253, 0.22), transparent 58%),
+      radial-gradient(60% 50% at 88% 0%, rgba(110, 111, 191, 0.16), transparent 62%),
+      linear-gradient(180deg, #0a0d1f 0%, var(--background) 45%, #070915 100%);
+    color: var(--on-surface);
+    font-family: var(--font-public-sans);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography scale — Lexend for display/headlines, Public Sans for body */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-lexend);
+    color: var(--on-surface);
+    letter-spacing: -0.01em;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar          { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track    { background: var(--surface-container-low); }
+  ::-webkit-scrollbar-thumb    { background: var(--outline-variant); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+
+  /* Focus ring — use primary glow instead of default */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(82, 80, 253, 0.35);
+    border-radius: var(--radius);
+  }
+}
+
+/* ─── Component Layer ────────────────────────────────────────────────────── */
+@layer components {
+  /* ── Surface Cards ─────────────────────────── */
+  .card {
+    @apply bg-surface-container rounded-3xl p-6 border border-outline-variant/30;
+  }
+  .card-sm {
+    @apply bg-surface-container rounded-3xl p-4 border border-outline-variant/30;
+  }
+  .card-high {
+    @apply bg-surface-container-high rounded-3xl p-6 border border-outline-variant/30;
+  }
+  .card-glass {
+    @apply rounded-3xl p-6 border border-outline-variant/30;
+    background: rgba(31, 35, 68, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* ── Primary Gradient Button ───────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full
+           text-sm font-semibold text-on-primary-container
+           transition-all duration-200 cursor-pointer select-none
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #5250fd 0%, #6e6fbf 100%);
+    box-shadow: 0 10px 24px rgba(82, 80, 253, 0.34);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06) saturate(1.05);
+    box-shadow: 0 14px 28px rgba(82, 80, 253, 0.42);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .btn-cta {
+    @apply btn-primary;
+    background: linear-gradient(135deg, #5250fd 0%, #6e6fbf 55%, #5250fd 100%);
+    background-size: 180% 180%;
+  }
+  .btn-cta:hover:not(:disabled) {
+    background-position: 100% 50%;
+    box-shadow: 0 16px 30px rgba(82, 80, 253, 0.48);
+  }
+
+  /* ── Secondary / Ghost Button ──────────────── */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full
+           text-sm font-medium text-on-surface-variant border
+           transition-all duration-200 cursor-pointer select-none
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    border-color: rgba(119, 118, 130, 0.42);
+    background: transparent;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+  }
+
+  /* ── Icon Button ───────────────────────────── */
+  .btn-icon {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-full
+           text-on-surface-variant transition-colors duration-150 cursor-pointer;
+  }
+  .btn-icon:hover {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+  }
+
+  /* ── Input ─────────────────────────────────── */
+  .input {
+    @apply w-full rounded-full px-4 py-2.5 text-sm text-on-surface
+           placeholder:text-on-surface-variant
+           transition-all duration-150 outline-none;
+    background: var(--surface-container-highest);
+    border: 1px solid rgba(119, 118, 130, 0.3);
+  }
+  .input:focus {
+    border-color: rgba(82, 80, 253, 0.38);
+    box-shadow: 0 0 0 3px rgba(82, 80, 253, 0.16);
+  }
+
+  /* ── Select ────────────────────────────────── */
+  .select {
+    @apply input appearance-none pr-8 cursor-pointer;
+  }
+
+  /* ── Table ─────────────────────────────────── */
+  .data-table {
+    @apply w-full text-sm border-separate border-spacing-0;
+  }
+  .data-table thead th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider
+           text-on-surface-variant bg-surface-container-low sticky top-0 z-10;
+  }
+  .data-table tbody tr {
+    @apply transition-colors duration-100;
+  }
+  .data-table tbody tr:hover td {
+    background: rgba(34, 42, 61, 0.6);
+  }
+  .data-table tbody tr:nth-child(even) td {
+    background: rgba(19, 27, 46, 0.5);
+  }
+  .data-table tbody td {
+    @apply px-4 py-3 text-on-surface;
+  }
+
+  /* ── Badge / Tag ───────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+  .badge-success {
+    @apply badge;
+    background: rgba(110, 213, 164, 0.15);
+    color: #6ed5a4;
+  }
+  .badge-error {
+    @apply badge;
+    background: rgba(255, 143, 135, 0.14);
+    color: #ff8f87;
+  }
+  .badge-pending {
+    @apply badge;
+    background: rgba(160, 44, 0, 0.18);
+    color: #ffbca4;
+  }
+  .badge-info {
+    @apply badge;
+    background: rgba(82, 80, 253, 0.16);
+    color: #b8b6ff;
+  }
+  .badge-neutral {
+    @apply badge;
+    background: rgba(119, 118, 130, 0.2);
+    color: #d4d3dc;
+  }
+
+  /* ── Sidebar navigation link ───────────────── */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium
+           text-on-surface-variant transition-all duration-150 cursor-pointer;
+  }
+  .nav-item:hover {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+  }
+  .nav-item.active {
+    background: rgba(82, 80, 253, 0.22);
+    color: var(--primary);
+  }
+  .nav-item.active svg {
+    color: var(--primary);
+  }
+
+  /* ── KPI Card ──────────────────────────────── */
+  .kpi-card {
+    @apply card flex flex-col gap-4;
+  }
+
+  /* ── Section heading ───────────────────────── */
+  .section-heading {
+    @apply text-xs font-semibold uppercase tracking-widest text-on-surface-variant;
+  }
+}
+
+/* ─── Utility Layer ──────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #c0c1ff 0%, #b7c8e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .glass {
+    background: rgba(34, 42, 61, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ─── Leaflet Map Overrides ──────────────────────────────────────────────── */
+.leaflet-container {
+  background: var(--surface-container-low) !important;
+  border-radius: 24px;
+}
+.leaflet-control-attribution {
+  background: rgba(16, 19, 41, 0.8) !important;
+  color: var(--outline) !important;
+  border-radius: 9999px !important;
+  font-size: 10px !important;
+}
+.leaflet-control-zoom a {
+  background: rgba(31, 35, 68, 0.85) !important;
+  backdrop-filter: blur(8px);
+  color: var(--on-surface) !important;
+  border-color: rgba(119, 118, 130, 0.4) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--surface-container-highest) !important;
+}
