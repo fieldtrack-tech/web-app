@@ -19,7 +19,7 @@ export interface CurrentUser {
 
   // ─── Role helpers ────────────────────────────────────────────────────────
   isAdmin: boolean;
-  /** True for EMPLOYEE, SUPERVISOR, FINANCE, TEAM_LEAD — any non-admin field role. */
+  /** True for EMPLOYEE — any non-admin field role. */
   isFieldRole: boolean;
   /** Alias for isFieldRole for callers coming from an "isEmployee" mental model. */
   isEmployee: boolean;

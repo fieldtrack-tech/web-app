@@ -5,7 +5,6 @@
 export const API = {
   // Sessions
   sessions: "/attendance/my-sessions",
-  orgSessions: "/attendance/org-sessions",
   adminSessions: "/admin/sessions",
 
   // Locations

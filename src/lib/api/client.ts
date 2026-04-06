@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { ApiError, PaginatedResponse } from "@/types";
 import { env } from "@/lib/env";
+import type { ZodSchema } from "zod";
 
 const BASE_URL = env.API_BASE_URL;
 
@@ -94,7 +95,7 @@ function buildUrl(path: string, params?: Record<string, string>): string {
 
 async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 10_000);
+  const id = setTimeout(() => controller.abort(), 15_000);
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
     clearTimeout(id);
@@ -169,8 +170,18 @@ async function parseEnvelopeOrThrow<T extends { success?: boolean; error?: strin
   return json;
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response, schema?: ZodSchema<T>): Promise<T> {
   const json = await parseEnvelopeOrThrow<{ success: true; data: T; requestId?: string }>(response);
+  if (schema && process.env.NODE_ENV !== "production") {
+    const result = schema.safeParse(json.data);
+    if (!result.success) {
+      console.warn(
+        "[API contract drift]",
+        response.url,
+        result.error.format(),
+      );
+    }
+  }
   return json.data;
 }
 
@@ -207,6 +218,20 @@ export async function apiGet<T>(path: string, params?: Record<string, string>): 
     const headers = await getAuthHeaders();
     const response = await retryableFetch(url, { method: "GET", headers });
     return handleResponse<T>(response);
+  });
+}
+
+/**
+ * Like apiGet but validates the response shape against a Zod schema in dev/test.
+ * In production the schema is skipped entirely — zero runtime cost.
+ * Use this for endpoints where contract drift would cause silent UI bugs.
+ */
+export async function apiGetValidated<T>(path: string, schema: ZodSchema<T>, params?: Record<string, string>): Promise<T> {
+  return withAuthRetry(async () => {
+    const url = buildUrl(path, params);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, { method: "GET", headers });
+    return handleResponse<T>(response, schema);
   });
 }
 

@@ -4,10 +4,7 @@ import type { UserRole } from "@/types";
 function toUserRole(value: unknown): UserRole | undefined {
   if (
     value === "ADMIN" ||
-    value === "EMPLOYEE" ||
-    value === "SUPERVISOR" ||
-    value === "FINANCE" ||
-    value === "TEAM_LEAD"
+    value === "EMPLOYEE"
   ) {
     return value;
   }
@@ -83,14 +80,8 @@ export function isAdmin(role: UserRole | null | undefined): boolean {
 }
 
 /**
- * Returns true for any non-admin field role:
- * EMPLOYEE | SUPERVISOR | FINANCE | TEAM_LEAD
+ * Returns true for any non-admin field role (currently only EMPLOYEE).
  */
 export function isFieldRole(role: UserRole | null | undefined): boolean {
-  return (
-    role === "EMPLOYEE" ||
-    role === "SUPERVISOR" ||
-    role === "FINANCE" ||
-    role === "TEAM_LEAD"
-  );
+  return role === "EMPLOYEE";
 }
