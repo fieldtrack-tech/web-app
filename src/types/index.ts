@@ -26,17 +26,19 @@ export interface UserPermissions {
 
 /** Semantic error codes — use these for type-safe error handling instead of comparing status numbers. */
 export type ApiErrorCode =
-  | "UNAUTHORIZED"    // 401 — token missing or expired and refresh failed
-  | "FORBIDDEN"       // 403 — authenticated but role/permission denied
-  | "NOT_FOUND"       // 404
-  | "TIMEOUT"         // 408
-  | "UNPROCESSABLE"   // 422 — validation error
-  | "INTERNAL_ERROR"  // 500
-  | "UNAVAILABLE"     // 503
-  | "NETWORK_ERROR"   // fetch/abort failure
-  | "UNKNOWN";        // anything else
+  | "UNAUTHORIZED"      // 401 — token missing or expired and refresh failed
+  | "FORBIDDEN"         // 403 — authenticated but role/permission denied
+  | "NOT_FOUND"         // 404
+  | "TIMEOUT"           // 408
+  | "VALIDATION_ERROR"  // 400 — bad request / validation failure
+  | "UNPROCESSABLE"     // 422 — semantic validation error
+  | "INTERNAL_ERROR"    // 500
+  | "UNAVAILABLE"       // 503
+  | "NETWORK_ERROR"     // fetch/abort failure
+  | "UNKNOWN";          // anything else
 
 function codeFromStatus(status: number): ApiErrorCode {
+  if (status === 400) return "VALIDATION_ERROR";
   if (status === 401) return "UNAUTHORIZED";
   if (status === 403) return "FORBIDDEN";
   if (status === 404) return "NOT_FOUND";

@@ -5,6 +5,7 @@ import { Trophy } from "lucide-react";
 import { useLeaderboard } from "@/hooks/queries/useAnalytics";
 import { useMyProfile } from "@/hooks/queries/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useDebounce } from "@/hooks/useDebounce";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { LeaderboardTable } from "@/components/charts/LeaderboardTable";
@@ -14,7 +15,8 @@ const METRICS: TopPerformerMetric[] = ["distance", "sessions", "duration", "expe
 
 export default function LeaderboardPage() {
   const [metric, setMetric] = useState<TopPerformerMetric>("distance");
-  const { data, isLoading, error, refetch } = useLeaderboard(metric, 50);
+  const debouncedMetric = useDebounce(metric, 300);
+  const { data, isLoading, error, refetch } = useLeaderboard(debouncedMetric, 50);
   const { role } = useAuth();
   const { data: profile } = useMyProfile({ enabled: role !== "ADMIN" });
 
@@ -28,12 +30,12 @@ export default function LeaderboardPage() {
         <p className="text-sm text-on-surface-variant">Rankings across your organisation.</p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {METRICS.map((m) => (
           <button
             key={m}
             onClick={() => setMetric(m)}
-            className={`btn-secondary h-8 px-3 text-xs ${metric === m ? "bg-primary/20 text-primary" : ""}`}
+            className={`btn-secondary h-8 px-3 text-xs capitalize ${metric === m ? "bg-primary/20 text-primary" : ""}`}
           >
             {m}
           </button>
@@ -46,7 +48,7 @@ export default function LeaderboardPage() {
       ) : (
         <LeaderboardTable
           data={data ?? []}
-          metric={metric}
+          metric={debouncedMetric}
           highlightEmployeeId={profile?.id}
           isAdmin={role === "ADMIN"}
         />

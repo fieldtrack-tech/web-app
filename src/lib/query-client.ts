@@ -1,9 +1,10 @@
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/types";
+import type { ApiErrorCode } from "@/types";
 
-function emitQueryError(message: string) {
+function emitQueryError(message: string, code?: ApiErrorCode, requestId?: string) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("fieldtrack:query-error", { detail: { message } }));
+  window.dispatchEvent(new CustomEvent("fieldtrack:query-error", { detail: { message, code, requestId } }));
 }
 
 function shouldSuppressError(error: unknown): boolean {
@@ -11,9 +12,6 @@ function shouldSuppressError(error: unknown): boolean {
   // 401 — withAuthRetry has already attempted a refresh and is handling the
   // redirect. Suppress the toast; there's nothing the user can action here.
   if (error.status === 401) return true;
-  // 403 — role or permission denial surfaced by withAuthRetry after a valid
-  // refresh. The page component owns the error UI; global toast is noise.
-  if (error.status === 403) return true;
   return false;
 }
 
@@ -44,7 +42,9 @@ export const queryClient = new QueryClient({
       logErrorInDev("Query error", error);
       if (shouldSuppressError(error)) return;
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
-      emitQueryError(message);
+      const code = error instanceof ApiError ? error.code : undefined;
+      const requestId = error instanceof ApiError ? error.requestId : undefined;
+      emitQueryError(message, code, requestId);
     },
   }),
   mutationCache: new MutationCache({
@@ -52,7 +52,9 @@ export const queryClient = new QueryClient({
       logErrorInDev("Mutation error", error);
       if (shouldSuppressError(error)) return;
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
-      emitQueryError(message);
+      const code = error instanceof ApiError ? error.code : undefined;
+      const requestId = error instanceof ApiError ? error.requestId : undefined;
+      emitQueryError(message, code, requestId);
     },
   }),
   defaultOptions: {

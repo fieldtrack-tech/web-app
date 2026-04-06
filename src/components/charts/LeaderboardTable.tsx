@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { formatDuration, formatKm, formatNumber } from "@/lib/utils";
+import { EmptyState } from "@/components/ui";
 import type { LeaderboardEntry, TopPerformerMetric } from "@/types";
 
 function metricValue(row: LeaderboardEntry, metric: TopPerformerMetric): string {
@@ -21,7 +23,13 @@ export function LeaderboardTable({
   isAdmin?: boolean;
 }) {
   if (!data.length) {
-    return <p className="text-sm text-on-surface-variant text-center py-8">No leaderboard data available.</p>;
+    return (
+      <EmptyState
+        icon={<Trophy className="w-5 h-5" />}
+        title="No leaderboard data"
+        description="No activity has been recorded for the selected metric yet."
+      />
+    );
   }
 
   return (

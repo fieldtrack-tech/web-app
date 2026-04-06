@@ -12,6 +12,7 @@ export const expensesApi = {
     amount: number;
     description: string;
     receipt_url?: string;
+    extension?: string;
   }) => apiPost<Expense>(API.createExpense, payload),
 
   myExpenses: (page = 1, limit = 20) =>

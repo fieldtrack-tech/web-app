@@ -6,6 +6,16 @@ import { PageHeader, LoadingState, EmptyState, StatusBadge, Pagination, Spinner 
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { PlusCircle, X } from "lucide-react";
 
+function receiptExtension(url: string): string {
+  try {
+    const pathname = new URL(url).pathname;
+    const ext = pathname.split(".").pop()?.toLowerCase();
+    return ext && ext.length <= 5 ? ext : "jpg";
+  } catch {
+    return "jpg";
+  }
+}
+
 function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
   const submit = useSubmitExpense();
   const [amount,      setAmount]      = useState("");
@@ -25,7 +35,10 @@ function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
       await submit.mutateAsync({
         amount: amt,
         description: description.trim(),
-        ...(receiptUrl.trim() ? { receipt_url: receiptUrl.trim() } : {}),
+        ...(receiptUrl.trim() ? {
+          receipt_url: receiptUrl.trim(),
+          extension: receiptExtension(receiptUrl.trim()),
+        } : {}),
       });
       onClose();
     } catch (err: unknown) {

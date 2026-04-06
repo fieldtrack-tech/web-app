@@ -104,7 +104,13 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
     if (err instanceof Error && err.name === "AbortError") {
       throw new ApiError("Request timeout", 408, undefined, "TIMEOUT");
     }
-    throw err;
+    // Convert any network-level failure (offline, DNS, CORS, etc.) to a typed error.
+    throw new ApiError(
+      "Network error — check your internet connection",
+      0,
+      undefined,
+      "NETWORK_ERROR"
+    );
   }
 }
 
@@ -148,9 +154,17 @@ async function parseEnvelopeOrThrow<T extends { success?: boolean; error?: strin
     }
   }
 
-  const json = (await parseJsonOrThrow(response)) as T;
+  const json = (await parseJsonOrThrow(response)) as T & {
+    details?: Array<{ path: string[]; message: string }>;
+  };
   if (!json.success) {
-    throw new ApiError(json.error ?? "Unknown error", response.status, json.requestId);
+    // For validation errors (400), include field-level details if present.
+    const details = json.details;
+    let message = json.error ?? "Unknown error";
+    if (details?.length) {
+      message = details.map((d) => d.message).join("; ");
+    }
+    throw new ApiError(message, response.status, json.requestId);
   }
   return json;
 }

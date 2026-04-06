@@ -37,6 +37,9 @@ export const analyticsApi = {
   leaderboard: (params: { metric: TopPerformerMetric; limit?: number } & DateRangeParams) =>
     apiGet<LeaderboardEntry[]>(API.leaderboard, stringifyParams(params)),
 
+  adminLeaderboard: (params: { metric: TopPerformerMetric; limit?: number } & DateRangeParams) =>
+    apiGet<LeaderboardEntry[]>(API.adminLeaderboard, stringifyParams(params)),
+
   myDashboard: () => apiGet<DashboardSummary>(API.myDashboard),
 
   adminDashboard: () => apiGet<AdminDashboardData>(API.adminDashboard),

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAllOrgSessions } from "@/hooks/queries/useSessions";
+import { PageHeader, EmptyState } from "@/components/ui";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { ActivityBadge } from "@/components/ActivityBadge";
@@ -51,12 +52,10 @@ export default function AdminSessionsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="font-manrope text-3xl font-bold text-on-surface">All Sessions</h2>
-        <p className="text-sm text-on-surface-variant">
-          {isLoading ? "Loading..." : `${grouped.length} employees with session activity`}
-        </p>
-      </div>
+      <PageHeader
+        title="All Sessions"
+        subtitle={isLoading ? "Loading…" : `${grouped.length} employee${grouped.length !== 1 ? "s" : ""} with session activity`}
+      />
 
       <div className="flex flex-wrap gap-1 rounded-lg bg-surface-container-high p-1 w-fit max-w-full">
         {(["all", "ACTIVE", "RECENT", "INACTIVE"] as const).map((k) => (
@@ -71,9 +70,15 @@ export default function AdminSessionsPage() {
       </div>
 
       {error ? <ErrorBanner error={error} onRetry={() => void refetch()} /> : null}
-      {isLoading ? <LoadingSkeleton variant="table" /> : null}
 
-      {!isLoading ? (
+      {isLoading ? (
+        <LoadingSkeleton variant="table" />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title={tab === "all" ? "No sessions yet" : `No ${tab.toLowerCase()} sessions`}
+          description={tab === "all" ? "Session activity will appear here once employees check in." : "Try a different filter."}
+        />
+      ) : (
         <div className="card overflow-x-auto">
           <table className="data-table w-full">
             <thead>
@@ -106,7 +111,7 @@ export default function AdminSessionsPage() {
             </tbody>
           </table>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

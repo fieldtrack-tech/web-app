@@ -8,6 +8,8 @@ interface DateRange {
   [key: string]: string | number | boolean | null | undefined;
 }
 
+const DEFAULT_METRIC: TopPerformerMetric = "distance";
+
 export const analyticsKeys = {
   orgSummary: (range: DateRange) => ["orgSummary", range] as const,
   userSummary: (userId: string, range: DateRange) =>
@@ -17,6 +19,8 @@ export const analyticsKeys = {
   sessionTrend: (range: DateRange) => ["sessionTrend", range] as const,
   leaderboard: (metric: TopPerformerMetric, range: DateRange, limit?: number) =>
     ["leaderboard", metric, range, limit] as const,
+  adminLeaderboard: (metric: TopPerformerMetric, range: DateRange, limit?: number) =>
+    ["adminLeaderboard", metric, range, limit] as const,
 };
 
 export function useOrgSummary(range: DateRange = {}) {
@@ -39,13 +43,14 @@ export function useUserSummary(userId: string | null, range: DateRange = {}) {
 }
 
 export function useTopPerformers(
-  metric: TopPerformerMetric,
+  metric: TopPerformerMetric = DEFAULT_METRIC,
   range: DateRange = {},
   limit = 10
 ) {
+  const safeMetric = metric ?? DEFAULT_METRIC;
   return useQuery({
-    queryKey: analyticsKeys.topPerformers(metric, range, limit),
-    queryFn: () => analyticsApi.topPerformers(metric, { ...range, limit }),
+    queryKey: analyticsKeys.topPerformers(safeMetric, range, limit),
+    queryFn: () => analyticsApi.topPerformers(safeMetric, { ...range, limit }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
@@ -61,13 +66,28 @@ export function useSessionTrend(range: DateRange = {}) {
 }
 
 export function useLeaderboard(
-  metric: TopPerformerMetric,
+  metric: TopPerformerMetric = DEFAULT_METRIC,
   limit = 50,
   range: DateRange = {}
 ) {
+  const safeMetric = metric ?? DEFAULT_METRIC;
   return useQuery({
-    queryKey: analyticsKeys.leaderboard(metric, range, limit),
-    queryFn: () => analyticsApi.leaderboard({ metric, limit, ...range }),
+    queryKey: analyticsKeys.leaderboard(safeMetric, range, limit),
+    queryFn: () => analyticsApi.leaderboard({ metric: safeMetric, limit, ...range }),
+    staleTime: 120_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAdminLeaderboard(
+  metric: TopPerformerMetric = DEFAULT_METRIC,
+  limit = 50,
+  range: DateRange = {}
+) {
+  const safeMetric = metric ?? DEFAULT_METRIC;
+  return useQuery({
+    queryKey: analyticsKeys.adminLeaderboard(safeMetric, range, limit),
+    queryFn: () => analyticsApi.adminLeaderboard({ metric: safeMetric, limit, ...range }),
     staleTime: 120_000,
     placeholderData: keepPreviousData,
   });

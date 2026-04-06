@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useOrgSummary, useSessionTrend, useTopPerformers } from "@/hooks/queries/useAnalytics";
-import { PageHeader, LoadingState } from "@/components/ui";
+import { useDebounce } from "@/hooks/useDebounce";
+import { PageHeader, LoadingState, EmptyState } from "@/components/ui";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { OrgAnalyticsChart } from "@/components/charts/index";
 import { formatDuration, formatKm } from "@/lib/utils";
 import { Trophy } from "lucide-react";
@@ -41,13 +43,20 @@ export default function AdminAnalyticsPage() {
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [metric, setMetric] = useState<Extract<TopPerformerMetric, "distance" | "duration" | "sessions">>("distance");
 
+  // Debounce date inputs to avoid firing on every keystroke; metric is instant UX
+  // but debounced to avoid rapid consecutive calls when clicking through options.
+  const debouncedFrom = useDebounce(from, 400);
+  const debouncedTo = useDebounce(to, 400);
+  const debouncedMetric = useDebounce(metric, 300);
+
   const range = useMemo(
-    () => ({ from: toQueryDate(from, "start"), to: toQueryDate(to, "end") }),
-    [from, to]
+    () => ({ from: toQueryDate(debouncedFrom, "start"), to: toQueryDate(debouncedTo, "end") }),
+    [debouncedFrom, debouncedTo]
   );
+
   const { data: summary, isLoading: loadSum } = useOrgSummary(range);
   const { data: trend = [], isLoading: loadTrend } = useSessionTrend(range);
-  const { data: topPerfs = [], isLoading: loadTop } = useTopPerformers(metric, range);
+  const { data: topPerfs = [], isLoading: loadTop } = useTopPerformers(debouncedMetric, range);
 
   const chartData = trend.map((row) => ({
     date: row.date,
@@ -95,7 +104,9 @@ export default function AdminAnalyticsPage() {
         ].map((s) => (
           <div key={s.label} className="card space-y-1 text-center">
             <p className="section-heading">{s.label}</p>
-            <p className="font-manrope font-bold text-2xl text-on-surface">{loadSum ? "—" : s.value}</p>
+            <p className="font-manrope font-bold text-2xl text-on-surface">
+              {loadSum ? <span className="inline-block w-12 h-6 rounded bg-surface-container-high animate-pulse" /> : s.value}
+            </p>
           </div>
         ))}
       </div>
@@ -103,17 +114,29 @@ export default function AdminAnalyticsPage() {
       {/* Trend chart */}
       <div className="card space-y-3">
         <p className="font-manrope font-bold text-on-surface">Activity Overview</p>
-        {loadTrend ? <LoadingState message="Loading trend data..." /> : <OrgAnalyticsChart data={chartData} />}
+        {loadTrend ? (
+          <LoadingSkeleton variant="card" className="h-52" />
+        ) : chartData.length === 0 ? (
+          <EmptyState title="No trend data" description="No activity recorded in the selected date range." />
+        ) : (
+          <OrgAnalyticsChart data={chartData} />
+        )}
       </div>
 
       {/* Top performers */}
       <div className="card space-y-4">
         <p className="font-manrope font-bold text-on-surface flex items-center gap-2">
           <Trophy className="w-4 h-4 text-primary" />
-          Top Performers — {metricLabel(metric)}
+          Top Performers — {metricLabel(debouncedMetric)}
         </p>
         {loadTop ? (
-          <LoadingState />
+          <LoadingSkeleton variant="list" />
+        ) : topPerfs.length === 0 ? (
+          <EmptyState
+            icon={<Trophy className="w-5 h-5" />}
+            title="No top performers"
+            description="No data available for the selected metric and date range."
+          />
         ) : (
           <div className="space-y-2">
             {topPerfs.map((p, i) => (
@@ -127,7 +150,7 @@ export default function AdminAnalyticsPage() {
                   </span>
                   <span className="text-sm font-medium text-on-surface">{p.employeeName}</span>
                 </div>
-                <span className="text-sm text-on-surface-variant">{metricValue(metric, p)}</span>
+                <span className="text-sm text-on-surface-variant">{metricValue(debouncedMetric, p)}</span>
               </div>
             ))}
           </div>

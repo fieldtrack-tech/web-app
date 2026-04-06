@@ -6,6 +6,7 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { ActivityTrendChart } from "@/components/charts/ActivityTrendChart";
 import { DistanceChart } from "@/components/charts/DistanceChart";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { PageHeader } from "@/components/ui";
 import dynamic from "next/dynamic";
 import { useAdminMap } from "@/hooks/queries/useDashboard";
@@ -38,6 +39,15 @@ export default function AdminDashboardPage() {
     status: (marker.status === "ACTIVE" ? "ACTIVE" : "CLOSED") as "ACTIVE" | "CLOSED",
   }));
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Dashboard" subtitle="Organisation overview" />
+        <LoadingSkeleton variant="dashboard" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle="Organisation overview" />
@@ -46,25 +56,25 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           title="Total Sessions"
-          value={isLoading ? "—" : String(summary?.totalSessions ?? 0)}
+          value={String(summary?.totalSessions ?? 0)}
           icon={<Activity className="w-5 h-5" />}
           accent="primary"
         />
         <KpiCard
           title="Active Employees"
-          value={isLoading ? "—" : String(summary?.activeEmployeesCount ?? 0)}
+          value={String(summary?.activeEmployeesCount ?? 0)}
           icon={<Users className="w-5 h-5" />}
           accent="success"
         />
         <KpiCard
           title="Total Distance"
-          value={isLoading ? "—" : `${(summary?.totalDistanceKm ?? 0).toFixed(1)} km`}
+          value={`${(summary?.totalDistanceKm ?? 0).toFixed(1)} km`}
           icon={<Route className="w-5 h-5" />}
           accent="tertiary"
         />
         <KpiCard
           title="Total Expenses"
-          value={isLoading ? "—" : String(summary?.totalExpenses ?? 0)}
+          value={String(summary?.totalExpenses ?? 0)}
           icon={<MapPin className="w-5 h-5" />}
           accent={summary?.totalExpenses ? "error" : "primary"}
         />

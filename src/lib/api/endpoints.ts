@@ -24,6 +24,7 @@ export const API = {
   // Analytics
   orgSummary: "/admin/org-summary",
   topPerformers: "/admin/top-performers",
+  adminLeaderboard: "/admin/leaderboard",
   sessionTrend: "/admin/session-trend",
   leaderboard: "/leaderboard",
 
