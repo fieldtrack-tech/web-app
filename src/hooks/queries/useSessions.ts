@@ -15,7 +15,7 @@ export const sessionKeys = {
   org: (page: number, limit: number) => ["sessions", "org", page, limit] as const,
 };
 
-export function useMySessions(page = 1, limit = 20) {
+export function useMySessions(page = 1, limit = 50) {
   return useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.mine(page, limit),
     queryFn: () => attendanceApi.mySessions(page, limit),
@@ -24,7 +24,7 @@ export function useMySessions(page = 1, limit = 20) {
   });
 }
 
-export function useOrgSessions(page = 1, limit = 20) {
+export function useOrgSessions(page = 1, limit = 50) {
   return useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.org(page, limit),
     queryFn: () => attendanceApi.orgSessions(page, limit),
@@ -99,7 +99,11 @@ export function useCheckIn() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: attendanceApi.checkIn,
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: sessionKeys.all });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
+    onError: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }
 
@@ -107,6 +111,10 @@ export function useCheckOut() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: attendanceApi.checkOut,
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: sessionKeys.all });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
+    onError: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }

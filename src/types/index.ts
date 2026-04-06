@@ -85,6 +85,7 @@ export interface PaginatedResponse<T> {
     page: number;
     limit: number;
     total: number;
+    totalPages: number;
   };
 }
 
@@ -384,6 +385,41 @@ export interface WebhookDelivery {
   last_attempt_at: string | null;
   next_retry_at: string | null;
   created_at: string;
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────
+export interface SearchResults {
+  employees: Array<{ id: string; name: string; employee_code: string | null; is_active: boolean }>;
+  expenses: Array<{ id: string; description: string; amount: number; status: string; employee_name: string | null }>;
+}
+
+// ─── Employee Profile (detailed) ──────────────────────────────────────────
+export interface EmployeeProfileDetail {
+  employee: Employee & { is_checked_in: boolean; last_check_in_at: string | null };
+  summary: {
+    totalSessions: number;
+    totalDistanceKm: number;
+    totalDurationSeconds: number;
+    expensesSubmitted: number;
+    expensesApproved: number;
+  };
+  recentSessions: Array<{
+    id: string;
+    checkin_at: string;
+    checkout_at: string | null;
+    total_distance_km: number | null;
+    total_duration_seconds: number | null;
+    distance_recalculation_status: string | null;
+    created_at: string;
+  }>;
+  expenses: Array<{
+    id: string;
+    amount: number;
+    description: string;
+    status: string;
+    submitted_at: string;
+    reviewed_at: string | null;
+  }>;
 }
 
 // ─── Navigation helpers ───────────────────────────────────────────────────

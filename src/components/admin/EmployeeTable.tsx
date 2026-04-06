@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEmployees } from "@/hooks/queries/useEmployees";
@@ -13,29 +13,60 @@ import {
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { formatDate, timeAgo } from "@/lib/utils";
 
+const SEGMENTS = [
+  { label: "All", value: undefined },
+  { label: "Active", value: "active" },
+  { label: "Recent", value: "recent" },
+  { label: "Inactive", value: "inactive" },
+] as const;
+
 export function EmployeeTable() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [segment, setSegment] = useState<string | undefined>(undefined);
   const router = useRouter();
-  const LIMIT = 20;
+  const LIMIT = 50;
 
-  const { data, isLoading } = useEmployees(page, LIMIT);
+  // Debounce search input
+  const debounceRef = useMemo(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    return (value: string) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setDebouncedSearch(value);
+        setPage(1);
+      }, 300);
+    };
+  }, []);
+
+  const { data, isLoading } = useEmployees(page, LIMIT, debouncedSearch || undefined, segment);
   const employees = data?.data ?? [];
   const total = data?.pagination.total ?? 0;
+  const totalPages = data?.pagination.totalPages ?? 0;
   const checkedIn = employees.filter((e) => e.is_checked_in).length;
 
-  const filtered = employees?.filter(
-    (e) =>
-      !search ||
-      e.name?.toLowerCase().includes(search.toLowerCase()) ||
-      (e.employee_code ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (e.phone ?? "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (isLoading) return <LoadingSkeleton variant="table" />;
+  if (isLoading && !data) return <LoadingSkeleton variant="table" />;
 
   return (
     <div className="space-y-4">
+      {/* Segments */}
+      <div className="flex items-center gap-1 rounded-xl bg-surface-container p-1">
+        {SEGMENTS.map((seg) => (
+          <button
+            key={seg.label}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              segment === seg.value
+                ? "bg-primary text-on-primary"
+                : "text-on-surface-variant hover:bg-surface-container-high"
+            }`}
+            onClick={() => { setSegment(seg.value); setPage(1); }}
+          >
+            {seg.label}
+          </button>
+        ))}
+      </div>
+
       {/* Stats + Search */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -54,9 +85,9 @@ export function EmployeeTable() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant" />
           <input
             className="input pl-9 h-9 text-xs"
-            placeholder="Search name, code, or phone…"
+            placeholder="Search name or code…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); debounceRef(e.target.value); }}
           />
         </div>
       </div>
@@ -77,7 +108,7 @@ export function EmployeeTable() {
               </tr>
             </thead>
             <tbody>
-              {!filtered?.length ? (
+              {!employees?.length ? (
                 <tr>
                   <td colSpan={7}>
                     <EmptyState
@@ -88,7 +119,7 @@ export function EmployeeTable() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((emp) => (
+                employees.map((emp) => (
                   <tr
                     key={emp.id}
                     className="cursor-pointer"
@@ -145,11 +176,14 @@ export function EmployeeTable() {
 
       <Pagination
         page={page}
-        hasMore={page * LIMIT < total}
+        hasMore={page < totalPages}
         onPrev={() => setPage((p) => Math.max(1, p - 1))}
         onNext={() => setPage((p) => p + 1)}
-        showing={filtered?.length}
+        onGoToPage={setPage}
+        showing={employees?.length}
         total={total}
+        totalPages={totalPages}
+        limit={LIMIT}
       />
     </div>
   );

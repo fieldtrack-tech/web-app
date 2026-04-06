@@ -7,13 +7,13 @@ export const attendanceApi = {
 
   checkOut: () => apiPost<AttendanceSession>("/attendance/check-out", {}),
 
-  mySessions: (page = 1, limit = 20) =>
+  mySessions: (page = 1, limit = 50) =>
     apiGetPaginated<AttendanceSession>(API.sessions, {
       page: String(page),
       limit: String(limit),
     }),
 
-  orgSessions: (page = 1, limit = 20) =>
+  orgSessions: (page = 1, limit = 50) =>
     apiGetPaginated<AttendanceSession>(API.adminSessions, {
       page: String(page),
       limit: String(limit),

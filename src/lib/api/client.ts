@@ -202,10 +202,11 @@ async function handlePaginatedResponse<T>(response: Response): Promise<Paginated
   return {
     success: true,
     data: (json["data"] as T[]) ?? [],
-    pagination: (json["pagination"] as { page: number; limit: number; total: number }) ?? {
+    pagination: (json["pagination"] as { page: number; limit: number; total: number; totalPages: number }) ?? {
       page: 1,
       limit: 20,
       total: 0,
+      totalPages: 0,
     },
   };
 }

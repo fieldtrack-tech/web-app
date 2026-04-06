@@ -1,23 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, UserSquare2, Route, Clock, CreditCard } from "lucide-react";
-import { useEmployee } from "@/hooks/queries/useEmployees";
-import { useUserSummary } from "@/hooks/queries/useAnalytics";
+import { ArrowLeft, Phone, UserSquare2, Clock, CreditCard, Activity } from "lucide-react";
+import { useEmployee, useEmployeeProfile } from "@/hooks/queries/useEmployees";
 import { useEmployeeSessionHistory } from "@/hooks/queries/useSessions";
+import { useEmployeeOrgExpenses } from "@/hooks/queries/useExpenses";
 import { PageHeader, LoadingState, EmptyState, StatusBadge } from "@/components/ui";
-import { formatDuration, formatKm, formatDate } from "@/lib/utils";
+import { formatDuration, formatKm, formatDate, timeAgo } from "@/lib/utils";
+
+const TABS = ["Summary", "Sessions", "Expenses"] as const;
+type Tab = (typeof TABS)[number];
 
 export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [activeTab, setActiveTab] = useState<Tab>("Summary");
 
   const { data: employee,  isLoading: loadEmp }  = useEmployee(id);
-  const { data: summary,   isLoading: loadSum }  = useUserSummary(id);
+  const { data: profile,   isLoading: loadProf } = useEmployeeProfile(id);
   const { data: sessions,  isLoading: loadSess } = useEmployeeSessionHistory(id);
+  const { data: expenses,  isLoading: loadExp }  = useEmployeeOrgExpenses(id);
 
-  if (loadEmp || loadSum) return <LoadingState />;
+  if (loadEmp || loadProf) return <LoadingState />;
   if (!employee) return <EmptyState title="Employee not found" description="This employee record does not exist." />;
+
+  const prof = profile;
 
   return (
     <div className="space-y-6">
@@ -28,6 +36,17 @@ export default function EmployeeDetailPage() {
         <PageHeader
           title={employee.name ?? employee.full_name ?? "Employee"}
           subtitle={employee.employee_code ? `Employee #${employee.employee_code}` : "Employee profile"}
+          actions={
+            <div className="flex items-center gap-2">
+              {prof?.employee?.is_checked_in && (
+                <span className="badge-success gap-1.5 text-xs">
+                  <Activity className="w-3 h-3" />
+                  Currently Checked In
+                </span>
+              )}
+              <StatusBadge status={employee.is_active ? "ACTIVE" : "CLOSED"} />
+            </div>
+          }
         />
       </div>
 
@@ -50,34 +69,39 @@ export default function EmployeeDetailPage() {
         <div className="space-y-1">
           <p className="section-heading">Total Sessions</p>
           <p className="text-2xl font-manrope font-bold text-on-surface">
-            {summary?.totalSessions ?? "—"}
+            {prof?.summary?.totalSessions ?? "—"}
           </p>
         </div>
         <div className="space-y-1">
           <p className="section-heading">Total Distance</p>
           <p className="text-2xl font-manrope font-bold text-on-surface">
-            {formatKm(summary?.totalDistanceKm)}
+            {formatKm(prof?.summary?.totalDistanceKm)}
           </p>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {[
           {
-            label: "Avg Distance / Session",
-            value: formatKm(summary?.avgDistanceKmPerSession),
-            icon: <Route className="w-4 h-4" />,
-          },
-          {
             label: "Total Time",
-            value: formatDuration(summary?.totalDurationSeconds ?? 0),
+            value: formatDuration(prof?.summary?.totalDurationSeconds ?? 0),
             icon: <Clock className="w-4 h-4" />,
           },
           {
-            label: "Total Expenses",
-            value: String(summary?.totalExpenses ?? 0),
+            label: "Expenses Submitted",
+            value: String(prof?.summary?.expensesSubmitted ?? 0),
             icon: <CreditCard className="w-4 h-4" />,
+          },
+          {
+            label: "Expenses Approved",
+            value: String(prof?.summary?.expensesApproved ?? 0),
+            icon: <CreditCard className="w-4 h-4" />,
+          },
+          {
+            label: "Last Seen",
+            value: prof?.employee?.last_check_in_at ? timeAgo(prof.employee.last_check_in_at) : "—",
+            icon: <Activity className="w-4 h-4" />,
           },
         ].map((s) => (
           <div key={s.label} className="card flex items-center gap-4">
@@ -94,36 +118,117 @@ export default function EmployeeDetailPage() {
         ))}
       </div>
 
-      {/* Recent sessions */}
-      <div className="card space-y-3">
-        <p className="font-manrope font-bold text-on-surface">Recent Sessions</p>
-        {loadSess ? (
-          <LoadingState />
-        ) : (sessions?.data ?? []).length === 0 ? (
-          <EmptyState title="No sessions" description="No session data available." />
-        ) : (
-          <table className="data-table w-full">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Duration</th>
-                <th>Distance</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(sessions?.data ?? []).map((s) => (
-                <tr key={s.id}>
-                  <td>{formatDate(s.checkin_at)}</td>
-                  <td>{formatDuration(s.total_duration_seconds ?? 0)}</td>
-                  <td>{formatKm(s.total_distance_km)}</td>
-                  <td><StatusBadge status={s.checkout_at ? "CLOSED" : "ACTIVE"} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* Tabs */}
+      <div className="flex items-center gap-1 rounded-xl bg-surface-container p-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
+              activeTab === tab
+                ? "bg-primary text-on-primary"
+                : "text-on-surface-variant hover:bg-surface-container-high"
+            }`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
+
+      {/* Tab Content */}
+      {activeTab === "Summary" && (
+        <div className="card space-y-3">
+          <p className="font-manrope font-bold text-on-surface">Recent Sessions</p>
+          {(prof?.recentSessions ?? []).length === 0 ? (
+            <EmptyState title="No sessions" description="No session data available." />
+          ) : (
+            <table className="data-table w-full">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Duration</th>
+                  <th>Distance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(prof?.recentSessions ?? []).map((s) => (
+                  <tr key={s.id}>
+                    <td>{formatDate(s.checkin_at)}</td>
+                    <td>{formatDuration(s.total_duration_seconds ?? 0)}</td>
+                    <td>{formatKm(s.total_distance_km)}</td>
+                    <td><StatusBadge status={s.checkout_at ? "CLOSED" : "ACTIVE"} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {activeTab === "Sessions" && (
+        <div className="card space-y-3">
+          <p className="font-manrope font-bold text-on-surface">All Sessions</p>
+          {loadSess ? (
+            <LoadingState />
+          ) : (sessions?.data ?? []).length === 0 ? (
+            <EmptyState title="No sessions" description="No session data available." />
+          ) : (
+            <table className="data-table w-full">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Duration</th>
+                  <th>Distance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(sessions?.data ?? []).map((s) => (
+                  <tr key={s.id}>
+                    <td>{formatDate(s.checkin_at)}</td>
+                    <td>{formatDuration(s.total_duration_seconds ?? 0)}</td>
+                    <td>{formatKm(s.total_distance_km)}</td>
+                    <td><StatusBadge status={s.checkout_at ? "CLOSED" : "ACTIVE"} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {activeTab === "Expenses" && (
+        <div className="card space-y-3">
+          <p className="font-manrope font-bold text-on-surface">Expenses</p>
+          {loadExp ? (
+            <LoadingState />
+          ) : (expenses?.data ?? []).length === 0 ? (
+            <EmptyState title="No expenses" description="No expense records available." />
+          ) : (
+            <table className="data-table w-full">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(expenses?.data ?? []).map((exp) => (
+                  <tr key={exp.id}>
+                    <td>{formatDate(exp.submitted_at)}</td>
+                    <td className="font-medium">₹{exp.amount.toLocaleString()}</td>
+                    <td className="text-on-surface-variant max-w-xs truncate">{exp.description}</td>
+                    <td><StatusBadge status={exp.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -15,9 +15,10 @@ interface FleetMember {
 interface FleetMapProps {
   fleet?: FleetMember[];
   className?: string;
+  onMarkerClick?: (member: FleetMember) => void;
 }
 
-export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl" }: FleetMapProps) {
+export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl", onMarkerClick }: FleetMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -75,6 +76,7 @@ export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl" }: 
               closeButton: false,
             }
           )
+          .on("click", () => onMarkerClick?.(member))
           .addTo(map);
       });
 
@@ -92,7 +94,7 @@ export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl" }: 
         mapRef.current = null;
       }
     };
-  }, [fleet]);
+  }, [fleet, onMarkerClick]);
 
   if (fleet.length === 0) {
     return (

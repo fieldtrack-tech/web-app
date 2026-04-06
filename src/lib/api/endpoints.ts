@@ -47,6 +47,9 @@ export const API = {
   setEmployeeStatus: (id: string) => `/admin/employees/${id}/status`,
   employeeProfile: (id: string) => `/admin/employees/${id}/profile`,
 
+  // Search
+  search: "/admin/search",
+
   // Profile
   myProfile: "/profile/me",
 

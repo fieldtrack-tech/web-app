@@ -95,7 +95,11 @@ export default function AdminSessionsPage() {
             <tbody>
               {filtered.map((row) => (
                 <tr key={row.employeeId}>
-                  <td>{row.latest.employee_name ?? row.employeeId}</td>
+                  <td>
+                    <Link href={`/admin/employees/${row.employeeId}`} className="font-medium hover:text-primary transition-colors">
+                      {row.latest.employee_name ?? row.employeeId}
+                    </Link>
+                  </td>
                   <td>{formatDate(row.latest.checkin_at)}</td>
                   <td>{row.latest.checkout_at ? formatDate(row.latest.checkout_at) : "Live"}</td>
                   <td>{formatKm(row.latest.total_distance_km)}</td>

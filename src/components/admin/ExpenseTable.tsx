@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, Search, X } from "lucide-react";
 import {
   useEmployeePendingExpenses,
@@ -20,11 +21,12 @@ export function ExpenseTable() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const LIMIT = 20;
+  const LIMIT = 50;
 
   const { data, isLoading } = useExpenseSummaryByEmployee(page, LIMIT);
   const summaries = data?.data ?? [];
   const total = data?.pagination.total ?? 0;
+  const totalPages = data?.pagination.totalPages ?? 0;
   const reviewMutation = useReviewExpense();
 
   const selectedSummary = summaries.find((summary) => summary.employeeId === selectedEmployeeId) ?? null;
@@ -100,7 +102,9 @@ export function ExpenseTable() {
                         <div className="flex items-center gap-2.5">
                           <Avatar name={summary.employeeName} size="sm" />
                           <div>
-                            <p className="font-medium text-on-surface">{summary.employeeName}</p>
+                            <Link href={`/admin/employees/${summary.employeeId}`} className="font-medium text-on-surface hover:text-primary transition-colors" onClick={(e) => e.stopPropagation()}>
+                              {summary.employeeName}
+                            </Link>
                             <p className="text-xs text-on-surface-variant">
                               {summary.employeeCode ? `#${summary.employeeCode}` : summary.employeeId}
                             </p>
@@ -214,11 +218,14 @@ export function ExpenseTable() {
 
       <Pagination
         page={page}
-        hasMore={page * LIMIT < total}
+        hasMore={page < totalPages}
         onPrev={() => setPage((p) => Math.max(1, p - 1))}
         onNext={() => setPage((p) => p + 1)}
+        onGoToPage={setPage}
         showing={filtered.length}
         total={total}
+        totalPages={totalPages}
+        limit={LIMIT}
       />
     </div>
   );

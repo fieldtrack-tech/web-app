@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell, Building2, Menu, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getInitials } from "@/lib/utils";
+import { SearchBar } from "@/components/admin/SearchBar";
 
 interface TopBarProps {
   orgName?: string;
@@ -50,6 +51,13 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
           </div>
         )}
       </div>
+
+      {/* Center: site-wide search (admin only, hidden on mobile) */}
+      {isAdmin && (
+        <div className="hidden md:block flex-1 max-w-md mx-4">
+          <SearchBar />
+        </div>
+      )}
 
       {/* Right actions */}
       <div className="flex items-center gap-2">

@@ -18,7 +18,7 @@ export const expenseKeys = {
     ["expenses", "employee", employeeId, page, limit] as const,
 };
 
-export function useMyExpenses(page = 1, limit = 20) {
+export function useMyExpenses(page = 1, limit = 50) {
   return useQuery({
     queryKey: expenseKeys.mine(page, limit),
     queryFn: () => expensesApi.myExpenses(page, limit),
@@ -27,7 +27,7 @@ export function useMyExpenses(page = 1, limit = 20) {
   });
 }
 
-export function useAdminExpenses(page = 1, limit = 20) {
+export function useAdminExpenses(page = 1, limit = 50) {
   return useQuery({
     queryKey: expenseKeys.admin(page, limit),
     queryFn: () => expensesApi.adminExpenses(page, limit),
@@ -36,7 +36,7 @@ export function useAdminExpenses(page = 1, limit = 20) {
   });
 }
 
-export function useExpenseSummaryByEmployee(page = 1, limit = 20) {
+export function useExpenseSummaryByEmployee(page = 1, limit = 50) {
   return useQuery({
     queryKey: expenseKeys.summary(page, limit),
     queryFn: () => expensesApi.summaryByEmployee(page, limit),
@@ -45,7 +45,7 @@ export function useExpenseSummaryByEmployee(page = 1, limit = 20) {
   });
 }
 
-export function useEmployeeOrgExpenses(employeeId: string | null, page = 1, limit = 20) {
+export function useEmployeeOrgExpenses(employeeId: string | null, page = 1, limit = 50) {
   return useQuery({
     enabled: !!employeeId,
     queryKey: expenseKeys.employee(employeeId!, page, limit),
@@ -143,6 +143,39 @@ export function useReviewExpense() {
       id: string;
       status: Extract<ExpenseStatus, "APPROVED" | "REJECTED">;
     }) => expensesApi.review(id, status),
-    onSuccess: () => qc.invalidateQueries({ queryKey: expenseKeys.all }),
+    onMutate: async ({ id, status }) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await qc.cancelQueries({ queryKey: expenseKeys.all });
+
+      // Snapshot all expense queries for rollback
+      const previousQueries = qc.getQueriesData({ queryKey: expenseKeys.all });
+
+      // Optimistically update matching expense in all cached queries
+      qc.setQueriesData(
+        { queryKey: expenseKeys.all },
+        (old: unknown) => {
+          if (!old || typeof old !== "object") return old;
+          const page = old as { data?: Array<{ id: string; status: string }> };
+          if (!Array.isArray(page.data)) return old;
+          return {
+            ...page,
+            data: page.data.map((e) =>
+              e.id === id ? { ...e, status } : e
+            ),
+          };
+        },
+      );
+
+      return { previousQueries };
+    },
+    onError: (_err, _vars, context) => {
+      // Roll back on error
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          qc.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: expenseKeys.all }),
   });
 }

@@ -128,8 +128,11 @@ interface PaginationProps {
   hasMore: boolean;
   onPrev: () => void;
   onNext: () => void;
+  onGoToPage?: (page: number) => void;
   showing?: number;
   total?: number;
+  totalPages?: number;
+  limit?: number;
 }
 
 export function Pagination({
@@ -137,17 +140,26 @@ export function Pagination({
   hasMore,
   onPrev,
   onNext,
+  onGoToPage,
   showing,
   total,
+  totalPages,
+  limit = 50,
 }: PaginationProps) {
+  const rangeStart = total != null && total > 0 ? (page - 1) * limit + 1 : 0;
+  const rangeEnd = showing != null ? rangeStart + showing - 1 : rangeStart;
+
   return (
     <div className="flex items-center justify-between pt-4">
       <span className="text-xs text-on-surface-variant">
-        {showing != null && total != null
-          ? `Showing ${showing} of ${total}`
+        {total != null && total > 0
+          ? `${rangeStart}–${Math.min(rangeEnd, total)} of ${total}`
           : `Page ${page}`}
+        {totalPages != null && totalPages > 1 && (
+          <span className="ml-1">({totalPages} pages)</span>
+        )}
       </span>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <button
           className="btn-secondary px-3 py-1.5 text-xs"
           disabled={page <= 1}
@@ -155,6 +167,19 @@ export function Pagination({
         >
           Previous
         </button>
+        {onGoToPage && totalPages != null && totalPages > 2 && (
+          <select
+            className="bg-surface-container border border-outline-variant rounded px-2 py-1 text-xs text-on-surface"
+            value={page}
+            onChange={(e) => onGoToPage(Number(e.target.value))}
+          >
+            {Array.from({ length: totalPages }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           className="btn-secondary px-3 py-1.5 text-xs"
           disabled={!hasMore}

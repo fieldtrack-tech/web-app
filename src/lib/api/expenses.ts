@@ -15,13 +15,13 @@ export const expensesApi = {
     extension?: string;
   }) => apiPost<Expense>(API.createExpense, payload),
 
-  myExpenses: (page = 1, limit = 20) =>
+  myExpenses: (page = 1, limit = 50) =>
     apiGetPaginated<Expense>(API.expenses, {
       page: String(page),
       limit: String(limit),
     }),
 
-  adminExpenses: (page = 1, limit = 20, params: AdminExpenseParams = {}) =>
+  adminExpenses: (page = 1, limit = 50, params: AdminExpenseParams = {}) =>
     apiGetPaginated<Expense>(API.orgExpenses, {
       page: String(page),
       limit: String(limit),
@@ -29,7 +29,7 @@ export const expensesApi = {
       ...(params.status ? { status: params.status } : {}),
     }),
 
-  summaryByEmployee: (page = 1, limit = 20) =>
+  summaryByEmployee: (page = 1, limit = 50) =>
     apiGetPaginated<EmployeeExpenseSummary>(API.expensesSummary, {
       page: String(page),
       limit: String(limit),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CalendarCheck } from "lucide-react";
 import { useOrgSessions } from "@/hooks/queries/useSessions";
 import {
@@ -14,11 +15,12 @@ import { formatDate, formatDuration, formatKm } from "@/lib/utils";
 
 export function AttendanceTable() {
   const [page, setPage] = useState(1);
-  const LIMIT = 20;
+  const LIMIT = 50;
 
   const { data, isLoading } = useOrgSessions(page, LIMIT);
   const sessions = data?.data ?? [];
   const total = data?.pagination.total ?? 0;
+  const totalPages = data?.pagination.totalPages ?? 0;
 
   if (isLoading) return <LoadingSkeleton variant="table" />;
 
@@ -54,9 +56,9 @@ export function AttendanceTable() {
                     <td>
                       <div className="flex items-center gap-2.5">
                         <Avatar name={s.employee_name} size="sm" />
-                        <span className="font-medium">
+                        <Link href={`/admin/employees/${s.employee_id}`} className="font-medium hover:text-primary transition-colors" onClick={(e) => e.stopPropagation()}>
                           {s.employee_name ?? (s.employee_id ? `#${s.employee_id.slice(-4)}` : "Unknown employee")}
-                        </span>
+                        </Link>
                       </div>
                     </td>
                     <td className="text-on-surface-variant">
@@ -82,11 +84,14 @@ export function AttendanceTable() {
 
       <Pagination
         page={page}
-        hasMore={page * LIMIT < total}
+        hasMore={page < totalPages}
         onPrev={() => setPage((p) => Math.max(1, p - 1))}
         onNext={() => setPage((p) => p + 1)}
+        onGoToPage={setPage}
         showing={sessions.length}
         total={total}
+        totalPages={totalPages}
+        limit={LIMIT}
       />
     </div>
   );
