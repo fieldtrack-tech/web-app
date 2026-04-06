@@ -9,11 +9,11 @@ import {
 } from "@/hooks/queries/useExpenses";
 import {
   StatusBadge,
-  LoadingState,
   EmptyState,
   Pagination,
   Avatar,
 } from "@/components/ui";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export function ExpenseTable() {
@@ -47,7 +47,7 @@ export function ExpenseTable() {
     (summary.employeeCode ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
-  if (isLoading) return <LoadingState />;
+  if (isLoading) return <LoadingSkeleton variant="table" />;
 
   return (
     <div className="space-y-4">
@@ -132,7 +132,7 @@ export function ExpenseTable() {
               description="Choose a row to inspect and action that employee's expense claims."
             />
           ) : detailLoading && sortedSelectedExpenses.length === 0 ? (
-            <LoadingState message="Loading employee expenses..." />
+            <LoadingSkeleton variant="list" />
           ) : (
             <>
               <div>

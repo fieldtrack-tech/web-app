@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { CalendarCheck } from "lucide-react";
 import { useOrgSessions } from "@/hooks/queries/useSessions";
 import {
   StatusBadge,
-  LoadingState,
   EmptyState,
   Pagination,
   Avatar,
 } from "@/components/ui";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { formatDate, formatDuration, formatKm } from "@/lib/utils";
 
 export function AttendanceTable() {
@@ -19,7 +20,7 @@ export function AttendanceTable() {
   const sessions = data?.data ?? [];
   const total = data?.pagination.total ?? 0;
 
-  if (isLoading) return <LoadingState />;
+  if (isLoading) return <LoadingSkeleton variant="table" />;
 
   return (
     <div className="space-y-4">
@@ -41,6 +42,7 @@ export function AttendanceTable() {
                 <tr>
                   <td colSpan={6}>
                     <EmptyState
+                      icon={<CalendarCheck className="w-5 h-5" />}
                       title="No sessions"
                       description="No attendance sessions found."
                     />

@@ -1,26 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { Search, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEmployees } from "@/hooks/queries/useEmployees";
 import {
-  LoadingState,
   EmptyState,
   Pagination,
   Avatar,
   StatusBadge,
 } from "@/components/ui";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { formatDate, timeAgo } from "@/lib/utils";
 
 export function EmployeeTable() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const router = useRouter();
   const LIMIT = 20;
 
   const { data, isLoading } = useEmployees(page, LIMIT);
   const employees = data?.data ?? [];
   const total = data?.pagination.total ?? 0;
+  const checkedIn = employees.filter((e) => e.is_checked_in).length;
 
   const filtered = employees?.filter(
     (e) =>
@@ -30,19 +32,33 @@ export function EmployeeTable() {
       (e.phone ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
-  if (isLoading) return <LoadingState />;
+  if (isLoading) return <LoadingSkeleton variant="table" />;
 
   return (
     <div className="space-y-4">
-      {/* Search */}
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant" />
-        <input
-          className="input pl-9 h-9 text-xs"
-          placeholder="Search name, code, or phone…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Stats + Search */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="badge-info gap-1.5">
+            <Users className="w-3 h-3" />
+            {total} total
+          </span>
+          {checkedIn > 0 && (
+            <span className="badge-success gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-success-green" />
+              {checkedIn} checked in
+            </span>
+          )}
+        </div>
+        <div className="relative max-w-xs w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-on-surface-variant" />
+          <input
+            className="input pl-9 h-9 text-xs"
+            placeholder="Search name, code, or phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Table */}
@@ -58,14 +74,14 @@ export function EmployeeTable() {
                 <th>Activity</th>
                 <th>Last Activity</th>
                 <th>Joined</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               {!filtered?.length ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={7}>
                     <EmptyState
+                      icon={<Users className="w-5 h-5" />}
                       title="No employees"
                       description="No employees match your search."
                     />
@@ -73,7 +89,11 @@ export function EmployeeTable() {
                 </tr>
               ) : (
                 filtered.map((emp) => (
-                  <tr key={emp.id}>
+                  <tr
+                    key={emp.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/admin/employees/${emp.id}`)}
+                  >
                     <td>
                       <div className="flex items-center gap-2.5">
                         <Avatar name={emp.name} size="md" />
@@ -114,14 +134,6 @@ export function EmployeeTable() {
                     </td>
                     <td className="text-on-surface-variant">
                       {formatDate(emp.created_at)}
-                    </td>
-                    <td className="text-right">
-                      <Link
-                        href={`/admin/employees/${emp.id}`}
-                        className="btn-icon w-7 h-7 rounded-lg"
-                      >
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
                     </td>
                   </tr>
                 ))
