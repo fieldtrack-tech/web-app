@@ -15,8 +15,8 @@ const METRICS: TopPerformerMetric[] = ["distance", "sessions", "duration", "expe
 export default function LeaderboardPage() {
   const [metric, setMetric] = useState<TopPerformerMetric>("distance");
   const { data, isLoading, error, refetch } = useLeaderboard(metric, 50);
-  const { data: profile } = useMyProfile();
   const { role } = useAuth();
+  const { data: profile } = useMyProfile({ enabled: role !== "ADMIN" });
 
   return (
     <div className="space-y-6">

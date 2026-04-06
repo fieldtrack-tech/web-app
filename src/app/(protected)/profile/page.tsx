@@ -10,7 +10,7 @@ import { PageTransition } from "@/components/motion";
 
 export default function MyProfilePage() {
   const { user, role } = useAuth();
-  const { data: profile, isLoading, error } = useMyProfile();
+  const { data: profile, isLoading, error } = useMyProfile({ enabled: role !== "ADMIN" });
   const { data: leaderboard } = useLeaderboard("distance", 50);
 
   const myRank = profile && leaderboard
@@ -25,17 +25,15 @@ export default function MyProfilePage() {
           <p className="text-sm text-on-surface-variant">Identity, activity status, and performance metrics.</p>
         </div>
 
-        {isLoading ? (
+        {role === "ADMIN" ? (
+          <div className="card text-center py-10 space-y-2">
+            <p className="font-manrope font-bold text-xl text-on-surface">{user?.email?.split("@")[0] ?? "Admin"}</p>
+            <p className="text-sm text-on-surface-variant">Administrator accounts do not have employee field profiles.</p>
+          </div>
+        ) : isLoading ? (
           <LoadingSkeleton variant="card" className="h-64" />
         ) : error ? (
-          role === "ADMIN" ? (
-            <div className="card text-center py-10 space-y-2">
-              <p className="font-manrope font-bold text-xl text-on-surface">{user?.email?.split("@")[0] ?? "Admin"}</p>
-              <p className="text-sm text-on-surface-variant">Administrator accounts do not have employee field profiles.</p>
-            </div>
-          ) : (
-            <ErrorBanner error={error} />
-          )
+          <ErrorBanner error={error} />
         ) : profile ? (
           <ProfileView profile={profile} rank={myRank} />
         ) : null}

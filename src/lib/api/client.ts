@@ -8,6 +8,10 @@ const BASE_URL = env.API_BASE_URL;
 let _cachedToken: string | null = null;
 let _tokenExpiry: number = 0;
 
+// Shared inflight refresh — at most one simultaneous supabase.auth.refreshSession().
+// All concurrent 401 handlers await the same promise; none can start a second refresh.
+let _refreshPromise: Promise<boolean> | null = null;
+
 export function clearAuthTokenCache() {
   _cachedToken = null;
   _tokenExpiry = 0;
@@ -31,10 +35,54 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
-async function handleAuthFailure(): Promise<void> {
-  clearAuthTokenCache();
-  await supabase.auth.signOut();
-  if (typeof window !== "undefined") window.location.href = "/login";
+// ─── Auth-aware retry wrapper ────────────────────────────────────────────────
+// On a 401, attempt a Supabase token refresh and replay the request once.
+// Multiple simultaneous 401s share a single refresh via _refreshPromise so
+// supabase.auth.refreshSession() is never called more than once concurrently.
+// • If the refresh itself fails  → session is truly expired → sign out + redirect.
+// • If the retry also returns 401 → role/permission denial, NOT an auth failure;
+//   re-throw as 403 so the component can surface an error without signing out.
+async function doRefresh(): Promise<boolean> {
+  if (!_refreshPromise) {
+    _refreshPromise = supabase.auth
+      .refreshSession()
+      .then(({ error }) => !error)
+      // Network failure during refresh (e.g. offline) resolves as false rather
+      // than rejecting. withAuthRetry treats false → session gone → logout.
+      // Without this, a thrown network error would escape the catch block in
+      // withAuthRetry unhandled, bypassing the logout path entirely.
+      .catch(() => false)
+      .finally(() => { _refreshPromise = null; });
+  }
+  return _refreshPromise;
+}
+
+async function withAuthRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.status !== 401) throw err;
+    // Token may be expired — try a silent refresh (deduplicated).
+    clearAuthTokenCache();
+    const refreshed = await doRefresh();
+    if (!refreshed) {
+      // Refresh failed: session is gone. Sign out and hard-navigate.
+      await supabase.auth.signOut();
+      if (typeof window !== "undefined") window.location.href = "/login";
+      throw err;
+    }
+    // Token refreshed — replay with the new credentials.
+    try {
+      return await fn();
+    } catch (retryErr) {
+      // Still 401 after a valid refresh → resource is off-limits for this role.
+      // Promote to 403 so callers never confuse this with an auth failure.
+      if (retryErr instanceof ApiError && retryErr.status === 401) {
+        throw new ApiError("Access denied.", 403, (retryErr as ApiError).requestId);
+      }
+      throw retryErr;
+    }
+  }
 }
 
 function buildUrl(path: string, params?: Record<string, string>): string {
@@ -54,7 +102,7 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   } catch (err) {
     clearTimeout(id);
     if (err instanceof Error && err.name === "AbortError") {
-      throw new ApiError("Request timeout", 408);
+      throw new ApiError("Request timeout", 408, undefined, "TIMEOUT");
     }
     throw err;
   }
@@ -90,7 +138,6 @@ async function parseEnvelopeOrThrow<T extends { success?: boolean; error?: strin
   response: Response
 ): Promise<T> {
   if (response.status === 401) {
-    await handleAuthFailure();
     throw new ApiError("Unauthorized. Please log in again.", 401);
   }
   if (!response.ok) {
@@ -115,7 +162,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 async function handlePaginatedResponse<T>(response: Response): Promise<PaginatedResponse<T>> {
   if (response.status === 401) {
-    await handleAuthFailure();
     throw new ApiError("Unauthorized. Please log in again.", 401);
   }
   if (!response.ok) {
@@ -142,61 +188,73 @@ async function handlePaginatedResponse<T>(response: Response): Promise<Paginated
 // ─── Public helpers ───────────────────────────────────────────────────────
 
 export async function apiGet<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const url = buildUrl(path, params);
-  const headers = await getAuthHeaders();
-  const response = await retryableFetch(url, { method: "GET", headers });
-  return handleResponse<T>(response);
+  return withAuthRetry(async () => {
+    const url = buildUrl(path, params);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, { method: "GET", headers });
+    return handleResponse<T>(response);
+  });
 }
 
 export async function apiGetEnvelope<T extends { success?: boolean; error?: string; requestId?: string }>(
   path: string,
   params?: Record<string, string>
 ): Promise<T> {
-  const url = buildUrl(path, params);
-  const headers = await getAuthHeaders();
-  const response = await retryableFetch(url, { method: "GET", headers });
-  return parseEnvelopeOrThrow<T>(response);
+  return withAuthRetry(async () => {
+    const url = buildUrl(path, params);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, { method: "GET", headers });
+    return parseEnvelopeOrThrow<T>(response);
+  });
 }
 
 export async function apiGetPaginated<T>(
   path: string,
   params?: Record<string, string>
 ): Promise<PaginatedResponse<T>> {
-  const url = buildUrl(path, params);
-  const headers = await getAuthHeaders();
-  const response = await retryableFetch(url, { method: "GET", headers });
-  return handlePaginatedResponse<T>(response);
+  return withAuthRetry(async () => {
+    const url = buildUrl(path, params);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, { method: "GET", headers });
+    return handlePaginatedResponse<T>(response);
+  });
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  const url = buildUrl(path);
-  const headers = await getAuthHeaders();
-  const response = await retryableFetch(url, {
-    method: "POST",
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+  return withAuthRetry(async () => {
+    const url = buildUrl(path);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, {
+      method: "POST",
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse<T>(response);
   });
-  return handleResponse<T>(response);
 }
 
 export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
-  const url = buildUrl(path);
-  const headers = await getAuthHeaders();
-  const response = await retryableFetch(url, {
-    method: "PATCH",
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+  return withAuthRetry(async () => {
+    const url = buildUrl(path);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, {
+      method: "PATCH",
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse<T>(response);
   });
-  return handleResponse<T>(response);
 }
 
 export async function apiDelete<T = void>(path: string): Promise<T> {
-  const url = buildUrl(path);
-  const headers = await getAuthHeaders();
-  const response = await retryableFetch(url, { method: "DELETE", headers });
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return handleResponse<T>(response);
+  return withAuthRetry(async () => {
+    const url = buildUrl(path);
+    const headers = await getAuthHeaders();
+    const response = await retryableFetch(url, { method: "DELETE", headers });
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    return handleResponse<T>(response);
+  });
 }
 

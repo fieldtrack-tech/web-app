@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { profileApi } from "@/lib/api/profile";
 
-export function useMyProfile() {
+export function useMyProfile(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["myProfile"],
     queryFn: () => profileApi.myProfile(),
+    enabled: options?.enabled !== false,
   });
 }
 

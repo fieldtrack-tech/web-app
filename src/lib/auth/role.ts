@@ -73,3 +73,24 @@ export function extractRoleFromSession(
 
   return "EMPLOYEE";
 }
+
+// ─── Role predicate helpers ──────────────────────────────────────────────────
+// Use these instead of inline string comparisons so a future role name change
+// is caught by TypeScript at the single definition site.
+
+export function isAdmin(role: UserRole | null | undefined): boolean {
+  return role === "ADMIN";
+}
+
+/**
+ * Returns true for any non-admin field role:
+ * EMPLOYEE | SUPERVISOR | FINANCE | TEAM_LEAD
+ */
+export function isFieldRole(role: UserRole | null | undefined): boolean {
+  return (
+    role === "EMPLOYEE" ||
+    role === "SUPERVISOR" ||
+    role === "FINANCE" ||
+    role === "TEAM_LEAD"
+  );
+}

@@ -7,9 +7,28 @@ function emitQueryError(message: string) {
 }
 
 function shouldSuppressError(error: unknown): boolean {
-  // Suppress 401 Unauthorized — the api client handles these by redirecting to /login.
-  if (error instanceof ApiError && error.status === 401) return true;
+  if (!(error instanceof ApiError)) return false;
+  // 401 — withAuthRetry has already attempted a refresh and is handling the
+  // redirect. Suppress the toast; there's nothing the user can action here.
+  if (error.status === 401) return true;
+  // 403 — role or permission denial surfaced by withAuthRetry after a valid
+  // refresh. The page component owns the error UI; global toast is noise.
+  if (error.status === 403) return true;
   return false;
+}
+
+/**
+ * React Query retry predicate.
+ * Do NOT let RQ retry 401 or 403 responses — auth errors are already handled
+ * with a single coordinated refresh inside withAuthRetry. A second RQ-level
+ * retry would invoke withAuthRetry again, wasting a refresh attempt.
+ * 5xx / network errors retain the default single retry.
+ */
+function shouldRetryQuery(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    return false;
+  }
+  return failureCount < 1;
 }
 
 function logErrorInDev(label: string, error: unknown): void {
@@ -40,7 +59,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 60_000,
       gcTime: 5 * 60_000,
-      retry: 1,
+      retry: shouldRetryQuery,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
       refetchOnWindowFocus: false,
     },

@@ -8,6 +8,7 @@ import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { EmployeeSidebar } from "@/components/layout/EmployeeSidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { Spinner } from "@/components/ui";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const { isLoading, role, user } = useAuth();
@@ -58,7 +59,9 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar onMenuClick={() => setSidebarOpen((v) => !v)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
     </div>
   );

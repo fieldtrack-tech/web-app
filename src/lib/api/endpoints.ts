@@ -50,6 +50,9 @@ export const API = {
   // Profile
   myProfile: "/profile/me",
 
+  // Auth identity (future endpoint — returns { id, email, role, orgId } from JWT)
+  authMe: "/auth/me",
+
   // Webhooks
   webhooks: "/admin/webhooks",
   webhookById: (id: string) => `/admin/webhooks/${id}`,

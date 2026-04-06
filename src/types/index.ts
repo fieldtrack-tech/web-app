@@ -23,14 +23,42 @@ export interface UserPermissions {
 }
 
 // ─── API envelope ──────────────────────────────────────────────────────────
+
+/** Semantic error codes — use these for type-safe error handling instead of comparing status numbers. */
+export type ApiErrorCode =
+  | "UNAUTHORIZED"    // 401 — token missing or expired and refresh failed
+  | "FORBIDDEN"       // 403 — authenticated but role/permission denied
+  | "NOT_FOUND"       // 404
+  | "TIMEOUT"         // 408
+  | "UNPROCESSABLE"   // 422 — validation error
+  | "INTERNAL_ERROR"  // 500
+  | "UNAVAILABLE"     // 503
+  | "NETWORK_ERROR"   // fetch/abort failure
+  | "UNKNOWN";        // anything else
+
+function codeFromStatus(status: number): ApiErrorCode {
+  if (status === 401) return "UNAUTHORIZED";
+  if (status === 403) return "FORBIDDEN";
+  if (status === 404) return "NOT_FOUND";
+  if (status === 408) return "TIMEOUT";
+  if (status === 422) return "UNPROCESSABLE";
+  if (status === 500) return "INTERNAL_ERROR";
+  if (status === 503) return "UNAVAILABLE";
+  return "UNKNOWN";
+}
+
 export class ApiError extends Error {
+  readonly code: ApiErrorCode;
+
   constructor(
     message: string,
     public readonly status: number,
-    public readonly requestId?: string
+    public readonly requestId?: string,
+    code?: ApiErrorCode
   ) {
     super(message);
     this.name = "ApiError";
+    this.code = code ?? codeFromStatus(status);
   }
 }
 

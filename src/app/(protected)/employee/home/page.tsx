@@ -1,8 +1,7 @@
 "use client";
 
 import { useMySessions } from "@/hooks/queries/useSessions";
-import { useMyProfile } from "@/hooks/queries/useProfile";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { CheckInCard } from "@/components/employee/CheckInCard";
 import { SessionList } from "@/components/employee/SessionList";
 import { LoadingState } from "@/components/ui";
@@ -27,9 +26,8 @@ function ActiveRouteSection({ sessionId }: { sessionId: string }) {
 }
 
 export default function EmployeeHomePage() {
-  const { user } = useAuth();
+  const { user, profile, isProfileLoading: loadProfile } = useCurrentUser();
   const { data: sessions, isLoading: loadSess } = useMySessions(1, 1);
-  const { data: profile, isLoading: loadProfile } = useMyProfile();
 
   const activeSession = (sessions?.data ?? []).find((s) => !s.checkout_at) ?? null;
 
