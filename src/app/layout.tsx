@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`dark ${publicSans.variable} ${lexend.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${publicSans.variable} ${lexend.variable}`}>
       <body className="bg-background text-on-surface antialiased">
         <Providers>{children}</Providers>
       </body>

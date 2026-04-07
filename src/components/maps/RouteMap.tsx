@@ -49,8 +49,14 @@ export function RouteMap({ points, className = "h-64 w-full rounded-2xl" }: Rout
         const latLngs = points.map(
           (p): [number, number] => [p.latitude, p.longitude]
         );
+        // Read theme-aware colors from computed CSS variables
+        const style = getComputedStyle(document.documentElement);
+        const routeColor = style.getPropertyValue("--chart-line-primary").trim() || "#6366f1";
+        const startColor = style.getPropertyValue("--chart-line-secondary").trim() || "#22c55e";
+        const errorColor = style.getPropertyValue("--error").trim() || "#f87171";
+
         L.polyline(latLngs, {
-          color: "#c0c1ff",
+          color: routeColor,
           weight: 3,
           opacity: 0.85,
         }).addTo(map);
@@ -58,7 +64,7 @@ export function RouteMap({ points, className = "h-64 w-full rounded-2xl" }: Rout
         // Start marker
         L.circleMarker(latLngs[0], {
           radius: 6,
-          fillColor: "#81c784",
+          fillColor: startColor,
           color: "#ffffff",
           weight: 2,
           opacity: 1,
@@ -68,7 +74,7 @@ export function RouteMap({ points, className = "h-64 w-full rounded-2xl" }: Rout
         // End marker
         L.circleMarker(latLngs[latLngs.length - 1], {
           radius: 6,
-          fillColor: "#ffb4ab",
+          fillColor: errorColor,
           color: "#ffffff",
           weight: 2,
           opacity: 1,

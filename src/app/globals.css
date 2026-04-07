@@ -4,53 +4,157 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── CSS Custom Properties ──────────────────────────────────────────────── */
+/* ─── Design Token System (HSL channel values — no hsl() wrapper) ─────────
+   Raw HSL channels enable Tailwind's opacity modifier: bg-primary/10
+   In non-Tailwind CSS use hsl(var(--token)) or hsl(var(--token) / 0.4)
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Light Mode (default) ──────────────────────────────────────────────── */
 :root {
-  --background: #080a18;
-  --surface: #101329;
-  --surface-dim: #080a18;
-  --surface-bright: #1b1f3f;
-  --surface-container-lowest: #080a18;
-  --surface-container-low: #101329;
-  --surface-container: #171a33;
-  --surface-container-high: #1f2344;
-  --surface-container-highest: #2a2f59;
-  --surface-variant: #1f2344;
-  --surface-tint: #5250fd;
+  /* Backgrounds */
+  --background:                  220 25% 97%;
+  --surface:                     220 20% 99%;
+  --surface-dim:                 220 15% 93%;
+  --surface-bright:              0 0% 100%;
+  --surface-container-lowest:    0 0% 100%;
+  --surface-container-low:       220 25% 97%;
+  --surface-container:           220 20% 94%;
+  --surface-container-high:      220 20% 90%;
+  --surface-container-highest:   220 20% 85%;
+  --surface-variant:             220 20% 90%;
+  --surface-tint:                241 98% 65%;
 
-  --primary: #5250fd;
-  --primary-container: #6e6fbf;
-  --on-primary: #f6f7ff;
-  --on-primary-container: #ffffff;
+  /* Primary — vibrant indigo */
+  --primary:                     241 98% 65%;
+  --primary-container:           241 80% 93%;
+  --on-primary:                  0 0% 100%;
+  --on-primary-container:        241 80% 25%;
 
-  --secondary: #6e6fbf;
-  --secondary-container: #5f60a8;
-  --on-secondary: #f2f2ff;
-  --on-secondary-container: #ffffff;
+  /* Secondary */
+  --secondary:                   241 38% 52%;
+  --secondary-container:         241 60% 93%;
+  --on-secondary:                0 0% 100%;
+  --on-secondary-container:      241 50% 22%;
 
-  --tertiary: #a02c00;
-  --tertiary-container: #c13f0d;
-  --on-tertiary: #ffe8df;
-  --on-tertiary-container: #fff5f1;
+  /* Tertiary — warm orange */
+  --tertiary:                    20 90% 50%;
+  --tertiary-container:          20 80% 93%;
+  --on-tertiary:                 0 0% 100%;
+  --on-tertiary-container:       20 80% 25%;
 
-  --error: #ff8f87;
-  --error-container: #6a1513;
-  --on-error: #2a0504;
-  --on-error-container: #ffe5e2;
+  /* Error */
+  --error:                       4 85% 52%;
+  --error-container:             4 80% 93%;
+  --on-error:                    0 0% 100%;
+  --on-error-container:          4 80% 22%;
 
-  --on-background: #f3f4ff;
-  --on-surface: #f3f4ff;
-  --on-surface-variant: #b3b4c8;
+  /* Text */
+  --on-background:               222 47% 11%;
+  --on-surface:                  222 47% 11%;
+  --on-surface-variant:          222 15% 38%;
 
-  --outline: #777682;
-  --outline-variant: #3e3f4d;
+  /* Borders */
+  --outline:                     222 15% 60%;
+  --outline-variant:             222 20% 87%;
 
-  --success-green: #6ed5a4;
+  /* Utility */
+  --success-green:               150 52% 38%;
+
+  /* Accent palette */
+  --accent-purple:               270 80% 62%;
+  --accent-cyan:                 190 80% 42%;
+  --accent-pink:                 330 80% 62%;
+  --accent-yellow:               45 95% 50%;
+  --accent-lime:                 78 75% 42%;
+
+  /* Pre-computed full colors for SVG/canvas (charts, maps) */
+  --chart-text:                  hsl(222, 15%, 45%);
+  --chart-grid:                  hsl(222, 20%, 87%);
+  --chart-line-primary:          hsl(241, 98%, 65%);
+  --chart-line-secondary:        hsl(150, 52%, 38%);
+  --chart-tooltip-bg:            hsl(220, 20%, 99%);
+  --chart-tooltip-border:        hsl(222, 20%, 87%);
+
+  --map-bg:                      hsl(220, 25%, 97%);
+  --map-control-bg:              hsl(220, 20%, 99%);
+  --map-control-border:          hsl(222, 20%, 87%);
+  --map-control-text:            hsl(222, 47%, 11%);
 
   --radius: 9999px;
-
   --font-public-sans: "Public Sans", sans-serif;
   --font-lexend: "Lexend", sans-serif;
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────────────────── */
+.dark {
+  /* Backgrounds — rich navy, NOT pure black */
+  --background:                  232 47% 7%;
+  --surface:                     229 42% 11%;
+  --surface-dim:                 232 47% 7%;
+  --surface-bright:              233 40% 18%;
+  --surface-container-lowest:    232 47% 7%;
+  --surface-container-low:       229 42% 11%;
+  --surface-container:           228 35% 15%;
+  --surface-container-high:      229 36% 19%;
+  --surface-container-highest:   232 37% 25%;
+  --surface-variant:             229 36% 19%;
+  --surface-tint:                241 98% 65%;
+
+  /* Primary */
+  --primary:                     241 98% 65%;
+  --primary-container:           241 38% 59%;
+  --on-primary:                  235 100% 97%;
+  --on-primary-container:        0 0% 100%;
+
+  /* Secondary */
+  --secondary:                   241 38% 59%;
+  --secondary-container:         241 28% 52%;
+  --on-secondary:                240 100% 97%;
+  --on-secondary-container:      0 0% 100%;
+
+  /* Tertiary */
+  --tertiary:                    20 90% 63%;
+  --tertiary-container:          20 70% 35%;
+  --on-tertiary:                 20 60% 93%;
+  --on-tertiary-container:       20 80% 90%;
+
+  /* Error */
+  --error:                       4 100% 77%;
+  --error-container:             1 70% 20%;
+  --on-error:                    4 60% 12%;
+  --on-error-container:          4 80% 93%;
+
+  /* Text */
+  --on-background:               236 100% 97%;
+  --on-surface:                  236 100% 97%;
+  --on-surface-variant:          237 14% 73%;
+
+  /* Borders */
+  --outline:                     246 7% 50%;
+  --outline-variant:             237 12% 27%;
+
+  /* Utility */
+  --success-green:               150 52% 63%;
+
+  /* Accent palette */
+  --accent-purple:               270 80% 68%;
+  --accent-cyan:                 190 80% 62%;
+  --accent-pink:                 330 80% 68%;
+  --accent-yellow:               45 95% 62%;
+  --accent-lime:                 78 80% 62%;
+
+  /* Pre-computed full colors for SVG/canvas */
+  --chart-text:                  hsl(237, 14%, 70%);
+  --chart-grid:                  hsl(237, 12%, 27%);
+  --chart-line-primary:          hsl(241, 98%, 75%);
+  --chart-line-secondary:        hsl(150, 52%, 63%);
+  --chart-tooltip-bg:            hsl(228, 35%, 17%);
+  --chart-tooltip-border:        hsl(237, 12%, 30%);
+
+  --map-bg:                      hsl(229, 42%, 11%);
+  --map-control-bg:              hsl(229, 36%, 19%);
+  --map-control-border:          hsl(237, 12%, 27%);
+  --map-control-text:            hsl(236, 100%, 97%);
 }
 
 /* ─── Base Reset ─────────────────────────────────────────────────────────── */
@@ -60,225 +164,315 @@
   }
 
   html {
-    color-scheme: dark;
     scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
-    background:
-      radial-gradient(70% 55% at 12% 12%, rgba(82, 80, 253, 0.22), transparent 58%),
-      radial-gradient(60% 50% at 88% 0%, rgba(110, 111, 191, 0.16), transparent 62%),
-      linear-gradient(180deg, #0a0d1f 0%, var(--background) 45%, #070915 100%);
-    color: var(--on-surface);
+    background-color: hsl(var(--background));
+    color: hsl(var(--on-surface));
     font-family: var(--font-public-sans);
     font-size: 0.875rem;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
-  /* Typography scale — Lexend for display/headlines, Public Sans for body */
+  .dark body {
+    background:
+      radial-gradient(70% 55% at 12% 12%, hsl(var(--primary) / 0.12), transparent 58%),
+      radial-gradient(60% 50% at 88% 0%, hsl(var(--secondary) / 0.08), transparent 62%),
+      linear-gradient(180deg, hsl(232 47% 9%) 0%, hsl(var(--background)) 45%, hsl(232 50% 6%) 100%);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-lexend);
-    color: var(--on-surface);
+    color: hsl(var(--on-surface));
     letter-spacing: -0.01em;
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar          { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track    { background: var(--surface-container-low); }
-  ::-webkit-scrollbar-thumb    { background: var(--outline-variant); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+  ::-webkit-scrollbar-track    { background: hsl(var(--surface-container-low)); }
+  ::-webkit-scrollbar-thumb    { background: hsl(var(--outline-variant)); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--outline)); }
 
-  /* Focus ring — use primary glow instead of default */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(82, 80, 253, 0.35);
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.40);
     border-radius: var(--radius);
   }
 }
 
 /* ─── Component Layer ────────────────────────────────────────────────────── */
 @layer components {
-  /* ── Surface Cards ─────────────────────────── */
+
+  /* ── Surface Cards ───────────────────────────── */
   .card {
-    @apply bg-surface-container rounded-3xl p-6 border border-outline-variant/30;
+    @apply rounded-2xl p-6;
+    background: hsl(var(--surface-container));
+    border: 1px solid hsl(var(--outline-variant) / 0.5);
+    box-shadow: 0 1px 3px hsl(var(--background) / 0.4), 0 4px 12px hsl(var(--background) / 0.12);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
-  .card-sm {
-    @apply bg-surface-container rounded-3xl p-4 border border-outline-variant/30;
+  .card:hover {
+    border-color: hsl(var(--outline-variant) / 0.8);
+    box-shadow: 0 2px 8px hsl(var(--background) / 0.5), 0 8px 24px hsl(var(--background) / 0.22);
+    transform: translateY(-1px);
   }
-  .card-high {
-    @apply bg-surface-container-high rounded-3xl p-6 border border-outline-variant/30;
+  .dark .card {
+    box-shadow:
+      0 1px 3px hsl(232 47% 4% / 0.6),
+      0 4px 16px hsl(232 47% 4% / 0.35),
+      inset 0 1px 0 hsl(var(--on-surface) / 0.03);
   }
-  .card-glass {
-    @apply rounded-3xl p-6 border border-outline-variant/30;
-    background: rgba(31, 35, 68, 0.78);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+  .dark .card:hover {
+    box-shadow:
+      0 2px 8px hsl(232 47% 4% / 0.7),
+      0 12px 32px hsl(232 47% 4% / 0.45),
+      inset 0 1px 0 hsl(var(--on-surface) / 0.05);
   }
 
-  /* ── Primary Gradient Button ───────────────── */
+  .card-sm {
+    @apply rounded-xl p-4;
+    background: hsl(var(--surface-container));
+    border: 1px solid hsl(var(--outline-variant) / 0.5);
+    box-shadow: 0 1px 3px hsl(var(--background) / 0.2);
+  }
+
+  .card-high {
+    @apply rounded-2xl p-6;
+    background: hsl(var(--surface-container-high));
+    border: 1px solid hsl(var(--outline-variant) / 0.5);
+    box-shadow: 0 1px 3px hsl(var(--background) / 0.4), 0 4px 12px hsl(var(--background) / 0.12);
+  }
+
+  .card-glass {
+    @apply rounded-2xl p-4;
+    background: hsl(var(--surface-container) / 0.85);
+    border: 1px solid hsl(var(--outline-variant) / 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px hsl(var(--background) / 0.3);
+  }
+
+  /* ── Primary Gradient Button ─────────────────── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full
-           text-sm font-semibold text-on-primary-container
+           text-sm font-semibold
            transition-all duration-200 cursor-pointer select-none
            disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #5250fd 0%, #6e6fbf 100%);
-    box-shadow: 0 10px 24px rgba(82, 80, 253, 0.34);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    color: hsl(var(--on-primary));
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.35), 0 1px 3px hsl(var(--primary) / 0.2);
   }
   .btn-primary:hover:not(:disabled) {
-    filter: brightness(1.06) saturate(1.05);
-    box-shadow: 0 14px 28px rgba(82, 80, 253, 0.42);
+    filter: brightness(1.08) saturate(1.05);
+    box-shadow: 0 6px 20px hsl(var(--primary) / 0.45), 0 2px 6px hsl(var(--primary) / 0.25);
+    transform: translateY(-1px);
   }
   .btn-primary:active:not(:disabled) {
-    transform: translateY(1px);
+    transform: translateY(0);
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
   }
 
   .btn-cta {
-    @apply btn-primary;
-    background: linear-gradient(135deg, #5250fd 0%, #6e6fbf 55%, #5250fd 100%);
-    background-size: 180% 180%;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full
+           text-sm font-semibold
+           transition-all duration-300 cursor-pointer select-none
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-purple)) 55%, hsl(var(--primary)) 100%);
+    color: hsl(var(--on-primary));
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.35), 0 1px 3px hsl(var(--primary) / 0.2);
   }
   .btn-cta:hover:not(:disabled) {
     background-position: 100% 50%;
-    box-shadow: 0 16px 30px rgba(82, 80, 253, 0.48);
+    box-shadow: 0 8px 24px hsl(var(--primary) / 0.48), 0 2px 6px hsl(var(--accent-purple) / 0.3);
   }
 
-  /* ── Secondary / Ghost Button ──────────────── */
+  /* ── Secondary / Ghost Button ────────────────── */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full
-           text-sm font-medium text-on-surface-variant border
+           text-sm font-medium
            transition-all duration-200 cursor-pointer select-none
            disabled:opacity-50 disabled:cursor-not-allowed;
-    border-color: rgba(119, 118, 130, 0.42);
+    color: hsl(var(--on-surface-variant));
+    border: 1px solid hsl(var(--outline) / 0.35);
     background: transparent;
   }
   .btn-secondary:hover:not(:disabled) {
-    background: var(--surface-container-high);
-    color: var(--on-surface);
+    background: hsl(var(--surface-container-high));
+    color: hsl(var(--on-surface));
+    border-color: hsl(var(--outline) / 0.55);
   }
 
-  /* ── Icon Button ───────────────────────────── */
+  /* ── Icon Button ─────────────────────────────── */
   .btn-icon {
     @apply inline-flex items-center justify-center w-9 h-9 rounded-full
-           text-on-surface-variant transition-colors duration-150 cursor-pointer;
+           transition-all duration-150 cursor-pointer;
+    color: hsl(var(--on-surface-variant));
   }
   .btn-icon:hover {
-    background: var(--surface-container-high);
-    color: var(--on-surface);
+    background: hsl(var(--surface-container-high));
+    color: hsl(var(--on-surface));
   }
 
-  /* ── Input ─────────────────────────────────── */
+  /* ── Input ───────────────────────────────────── */
   .input {
-    @apply w-full rounded-full px-4 py-2.5 text-sm text-on-surface
-           placeholder:text-on-surface-variant
-           transition-all duration-150 outline-none;
-    background: var(--surface-container-highest);
-    border: 1px solid rgba(119, 118, 130, 0.3);
+    @apply w-full rounded-full px-4 py-2.5 text-sm outline-none transition-all duration-150;
+    color: hsl(var(--on-surface));
+    background: hsl(var(--surface-container-highest));
+    border: 1px solid hsl(var(--outline) / 0.28);
+  }
+  .input::placeholder {
+    color: hsl(var(--on-surface-variant));
   }
   .input:focus {
-    border-color: rgba(82, 80, 253, 0.55);
-    box-shadow: 0 0 0 3px rgba(82, 80, 253, 0.22);
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
   }
 
-  /* ── Select ────────────────────────────────── */
+  /* ── Select ──────────────────────────────────── */
   .select {
     @apply input appearance-none pr-8 cursor-pointer;
   }
 
-  /* ── Table ─────────────────────────────────── */
+  /* ── Table ───────────────────────────────────── */
   .data-table {
     @apply w-full text-sm border-separate border-spacing-0;
   }
   .data-table thead th {
-    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider
-           text-on-surface-variant bg-surface-container-low sticky top-0 z-10;
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider sticky top-0 z-10;
+    color: hsl(var(--on-surface-variant));
+    background: hsl(var(--surface-container-low));
+    border-bottom: 1px solid hsl(var(--outline-variant) / 0.5);
   }
   .data-table tbody tr {
     @apply transition-colors duration-100;
   }
   .data-table tbody tr:hover td {
-    background: rgba(34, 42, 61, 0.6);
+    background: hsl(var(--surface-container-high) / 0.6);
   }
   .data-table tbody tr:nth-child(even) td {
-    background: rgba(19, 27, 46, 0.5);
+    background: hsl(var(--surface-container) / 0.4);
   }
   .data-table tbody td {
-    @apply px-4 py-3 text-on-surface;
+    @apply px-4 py-3;
+    color: hsl(var(--on-surface));
+    border-bottom: 1px solid hsl(var(--outline-variant) / 0.2);
+  }
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
   }
 
-  /* ── Badge / Tag ───────────────────────────── */
+  /* ── Badge / Tag ─────────────────────────────── */
   .badge {
     @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
   }
   .badge-success {
     @apply badge;
-    background: rgba(110, 213, 164, 0.15);
-    color: #6ed5a4;
+    background: hsl(var(--success-green) / 0.14);
+    color: hsl(var(--success-green));
   }
   .badge-error {
     @apply badge;
-    background: rgba(255, 143, 135, 0.14);
-    color: #ff8f87;
+    background: hsl(var(--error) / 0.14);
+    color: hsl(var(--error));
   }
   .badge-pending {
     @apply badge;
-    background: rgba(160, 44, 0, 0.18);
-    color: #ffbca4;
+    background: hsl(var(--tertiary) / 0.14);
+    color: hsl(var(--tertiary));
   }
   .badge-info {
     @apply badge;
-    background: rgba(82, 80, 253, 0.16);
-    color: #b8b6ff;
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
   }
   .badge-neutral {
     @apply badge;
-    background: rgba(119, 118, 130, 0.2);
-    color: #d4d3dc;
+    background: hsl(var(--outline) / 0.18);
+    color: hsl(var(--on-surface-variant));
   }
 
-  /* ── Sidebar navigation link ───────────────── */
+  /* ── Sidebar navigation link ─────────────────── */
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium
-           text-on-surface-variant transition-all duration-150 cursor-pointer;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+           transition-all duration-150 cursor-pointer;
+    color: hsl(var(--on-surface-variant));
+    position: relative;
   }
   .nav-item:hover {
-    background: var(--surface-container-high);
-    color: var(--on-surface);
+    background: hsl(var(--surface-container-high));
+    color: hsl(var(--on-surface));
   }
   .nav-item.active {
-    background: rgba(82, 80, 253, 0.22);
-    color: var(--primary);
-    box-shadow: inset 3px 0 0 rgba(82, 80, 253, 0.75);
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 25%;
+    bottom: 25%;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.5);
   }
   .nav-item.active svg {
-    color: var(--primary);
+    color: hsl(var(--primary));
   }
 
-  /* ── KPI Card ──────────────────────────────── */
+  /* ── KPI Card ────────────────────────────────── */
   .kpi-card {
     @apply card flex flex-col gap-4;
   }
+  .dark .kpi-card {
+    background:
+      linear-gradient(160deg, hsl(var(--primary) / 0.05) 0%, transparent 40%),
+      hsl(var(--surface-container));
+  }
 
-  /* ── Section heading ───────────────────────── */
+  /* ── Section heading ─────────────────────────── */
   .section-heading {
-    @apply text-xs font-semibold uppercase tracking-widest text-on-surface-variant;
+    @apply text-xs font-semibold uppercase tracking-widest;
+    color: hsl(var(--on-surface-variant));
   }
 }
 
 /* ─── Utility Layer ──────────────────────────────────────────────────────── */
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, #c0c1ff 0%, #b7c8e1 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-purple)) 50%, hsl(var(--accent-cyan)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-sm {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .glass {
-    background: rgba(34, 42, 61, 0.8);
+    background: hsl(var(--surface-container) / 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.35), 0 0 40px hsl(var(--primary) / 0.15);
   }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -287,21 +481,25 @@
 
 /* ─── Leaflet Map Overrides ──────────────────────────────────────────────── */
 .leaflet-container {
-  background: var(--surface-container-low) !important;
-  border-radius: 24px;
+  background: var(--map-bg) !important;
+  border-radius: 20px;
 }
 .leaflet-control-attribution {
-  background: rgba(16, 19, 41, 0.8) !important;
-  color: var(--outline) !important;
+  background: var(--map-control-bg) !important;
+  color: var(--map-control-text) !important;
   border-radius: 9999px !important;
   font-size: 10px !important;
+  border: 1px solid var(--map-control-border) !important;
 }
 .leaflet-control-zoom a {
-  background: rgba(31, 35, 68, 0.85) !important;
-  backdrop-filter: blur(8px);
-  color: var(--on-surface) !important;
-  border-color: rgba(119, 118, 130, 0.4) !important;
+  background: var(--map-control-bg) !important;
+  color: var(--map-control-text) !important;
+  border-color: var(--map-control-border) !important;
 }
 .leaflet-control-zoom a:hover {
-  background: var(--surface-container-highest) !important;
+  background: hsl(var(--surface-container-highest)) !important;
+}
+
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.83) contrast(0.9) saturate(0.8);
 }

@@ -197,7 +197,7 @@ export function Divider({ className }: { className?: string }) {
   return (
     <div
       className={cn("h-px w-full", className)}
-      style={{ background: "rgba(70,69,85,0.3)" }}
+      style={{ background: "hsl(var(--outline-variant) / 0.3)" }}
       aria-hidden
     />
   );

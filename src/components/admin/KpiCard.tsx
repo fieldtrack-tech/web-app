@@ -9,7 +9,7 @@ interface KpiCardProps {
   value: string | number;
   subtitle?: string;
   trend?: {
-    value: number;     // e.g. 2.4 → "+2.4%"
+    value: number;
     direction: "up" | "down" | "neutral";
   };
   sparkData?: number[];
@@ -18,11 +18,12 @@ interface KpiCardProps {
   className?: string;
 }
 
-const accentColors: Record<string, string> = {
-  primary:  "#c0c1ff",
-  success:  "#81c784",
-  error:    "#ffb4ab",
-  tertiary: "#ffb695",
+// Tailwind classes — engine resolves CSS vars at runtime, opacity modifier works
+const accentMap: Record<string, { iconBg: string; iconText: string; sparkColor: string }> = {
+  primary:  { iconBg: "bg-primary/10",       iconText: "text-primary",       sparkColor: "var(--chart-line-primary)" },
+  success:  { iconBg: "bg-success-green/10", iconText: "text-success-green", sparkColor: "var(--chart-line-secondary)" },
+  error:    { iconBg: "bg-error/10",         iconText: "text-error",         sparkColor: "var(--chart-line-primary)" },
+  tertiary: { iconBg: "bg-tertiary/10",      iconText: "text-tertiary",      sparkColor: "var(--chart-line-primary)" },
 };
 
 export function KpiCard({
@@ -35,7 +36,7 @@ export function KpiCard({
   accent = "primary",
   className,
 }: KpiCardProps) {
-  const color = accentColors[accent];
+  const { iconBg, iconText, sparkColor } = accentMap[accent];
 
   return (
     <div className={cn("kpi-card animate-fade-in", className)}>
@@ -54,11 +55,8 @@ export function KpiCard({
         </div>
 
         {icon && (
-          <div
-            className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
-            style={{ background: `${color}18` }}
-          >
-            <span style={{ color }}>{icon}</span>
+          <div className={cn("flex items-center justify-center w-10 h-10 rounded-xl shrink-0", iconBg)}>
+            <span className={iconText}>{icon}</span>
           </div>
         )}
       </div>
@@ -66,7 +64,7 @@ export function KpiCard({
       {/* Sparkline */}
       {sparkData && (
         <div className="-mx-1">
-          <KpiSparkline data={sparkData} color={color} height={40} />
+          <KpiSparkline data={sparkData} color={sparkColor} height={40} />
         </div>
       )}
 

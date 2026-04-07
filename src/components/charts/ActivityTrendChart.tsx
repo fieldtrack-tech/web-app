@@ -34,16 +34,35 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="card-glass px-3 py-2 text-xs space-y-1">
-      <p className="text-on-surface-variant">{label}</p>
+    <div
+      className="px-3 py-2 text-xs space-y-1 rounded-xl border"
+      style={{
+        background: "var(--chart-tooltip-bg)",
+        borderColor: "var(--chart-tooltip-border)",
+        color: "var(--chart-text)",
+      }}
+    >
+      <p style={{ color: "var(--chart-text)" }}>{label}</p>
       {payload.map((p) => (
-        <p key={p.name} style={{ color: p.color }}>
+        <p key={p.name} style={{ color: "var(--chart-line-primary)" }}>
           {p.name}: <span className="font-semibold">{p.value}</span>
         </p>
       ))}
     </div>
   );
 };
+
+// Custom tick components so inline styles carry CSS variable values (SVG attribute fill doesn't support vars)
+const CustomXTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) => (
+  <text x={x} y={(y ?? 0) + 12} textAnchor="middle" style={{ fill: "var(--chart-text)", fontSize: "10px" }}>
+    {payload?.value}
+  </text>
+);
+const CustomYTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string | number } }) => (
+  <text x={(x ?? 0) - 4} y={y} textAnchor="end" dominantBaseline="middle" style={{ fill: "var(--chart-text)", fontSize: "10px" }}>
+    {payload?.value}
+  </text>
+);
 
 export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
   if (data.length === 0) {
@@ -59,32 +78,23 @@ export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
       <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
         <defs>
           <linearGradient id="gradCheckIns" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#c0c1ff" stopOpacity={0.25} />
-            <stop offset="95%" stopColor="#c0c1ff" stopOpacity={0} />
+            <stop offset="5%"  stopColor="var(--chart-line-primary)" stopOpacity={0.22} />
+            <stop offset="95%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="rgba(70,69,85,0.2)" strokeDasharray="3 3" vertical={false} />
-        <XAxis
-          dataKey="label"
-          tick={{ fill: "#c7c4d8", fontSize: 10 }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fill: "#c7c4d8", fontSize: 10 }}
-          axisLine={false}
-          tickLine={false}
-        />
+        <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="label" tick={<CustomXTick />} axisLine={false} tickLine={false} />
+        <YAxis tick={<CustomYTick />} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip />} />
         <Area
           type="monotone"
           dataKey="checkIns"
           name="Check-ins"
-          stroke="#c0c1ff"
+          stroke="var(--chart-line-primary)"
           strokeWidth={1.5}
           fill="url(#gradCheckIns)"
           dot={false}
-          activeDot={{ r: 4, fill: "#c0c1ff" }}
+          activeDot={{ r: 4, fill: "var(--chart-line-primary)" }}
         />
       </AreaChart>
     </ResponsiveContainer>

@@ -41,40 +41,47 @@ export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl", on
       });
       mapRef.current = map;
 
-      // Dark-toned OSM tiles
+      // Dark-toned OSM tiles — use dark variant in dark mode, light in light mode
+      const isDark = document.documentElement.classList.contains("dark");
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        isDark
+          ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-          attribution: "© OpenStreetMap © CARTO",
-          subdomains: "abcd",
+          attribution: isDark ? "© OpenStreetMap © CARTO" : "© OpenStreetMap contributors",
+          subdomains: isDark ? "abcd" : "abc",
           maxZoom: 19,
         }
       ).addTo(map);
 
+      // Read theme colors
+      const style = getComputedStyle(document.documentElement);
+      const activeColor = style.getPropertyValue("--chart-line-secondary").trim() || "#22c55e";
+      const inactiveColor = style.getPropertyValue("--tertiary").trim() || "#f97316";
+      const tooltipBg = style.getPropertyValue("--chart-tooltip-bg").trim() || "#1a1a2e";
+      const tooltipText = style.getPropertyValue("--map-control-text").trim() || "#e2e8f0";
+
       fleet.forEach((member) => {
-        const color = member.status === "ACTIVE" ? "#2E7D32" : "#F57C00";
+        const color = member.status === "ACTIVE" ? activeColor : inactiveColor;
         const icon = L.divIcon({
           className: "",
           html: `<div style="
             width:12px;height:12px;
             border-radius:50%;
             background:${color};
-            border:2px solid #ffffff;
-            box-shadow:0 0 8px ${color}66;
+            border:2px solid white;
+            box-shadow:0 0 8px ${color}99;
           "></div>`,
           iconAnchor: [6, 6],
         });
 
         L.marker([member.latitude, member.longitude], { icon })
           .bindPopup(
-            `<div style="font-family:Inter,sans-serif;font-size:12px;color:#dae2fd;background:#171f33;padding:8px 12px;border-radius:8px;">
+            `<div style="font-family:var(--font-public-sans,sans-serif);font-size:12px;color:${tooltipText};background:${tooltipBg};padding:8px 12px;border-radius:8px;">
               <strong>${member.employeeName ?? "Employee"}</strong><br/>
               ${member.status ?? "ACTIVE"}
             </div>`,
-            {
-              className: "leaflet-popup-dark",
-              closeButton: false,
-            }
+            { className: "leaflet-popup-themed", closeButton: false }
           )
           .on("click", () => onMarkerClick?.(member))
           .addTo(map);

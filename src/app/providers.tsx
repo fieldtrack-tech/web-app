@@ -56,7 +56,12 @@ function GlobalErrorToast() {
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange={false}
+    >
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <EnvValidator>

@@ -1,43 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useEffect } from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import type { ThemeProviderProps } from "next-themes";
 
-interface ThemeContextValue {
-  theme: "dark";
-  resolvedTheme: "dark";
-  setTheme: (_theme: "dark") => void;
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }
 
-const ThemeContext = createContext<ThemeContextValue>({
-  theme: "dark",
-  resolvedTheme: "dark",
-  setTheme: () => undefined,
-});
-
-function applyDarkTheme() {
-  const root = document.documentElement;
-  root.classList.remove("light");
-  root.classList.add("dark");
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    applyDarkTheme();
-  }, []);
-
-  return (
-    <ThemeContext.Provider
-      value={{
-        theme: "dark",
-        resolvedTheme: "dark",
-        setTheme: () => undefined,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-export function useTheme() {
-  return useContext(ThemeContext);
-}
+// Re-export useTheme from next-themes so callers don't change their imports
+export { useTheme } from "next-themes";

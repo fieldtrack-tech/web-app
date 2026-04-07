@@ -6,6 +6,7 @@ import { Bell, Building2, Menu, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getInitials } from "@/lib/utils";
 import { SearchBar } from "@/components/admin/SearchBar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface TopBarProps {
   orgName?: string;
@@ -61,6 +62,9 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
 
       {/* Right actions */}
       <div className="flex items-center gap-2">
+        {/* Theme toggle */}
+        <ThemeToggle compact />
+
         {/* Bell — display only (no unread notifications) */}
         <div className="btn-icon cursor-default opacity-60" aria-label="Notifications (coming soon)" title="Notifications coming soon">
           <Bell className="w-4 h-4" />

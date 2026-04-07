@@ -10,16 +10,17 @@ interface SparklineProps {
 
 export function KpiSparkline({
   data,
-  color = "#c0c1ff",
+  color = "var(--chart-line-primary)",
   height = 40,
 }: SparklineProps) {
   const chartData = data.map((value, index) => ({ index, value }));
+  const gradId = `spark-${Math.random().toString(36).slice(2, 7)}`;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={chartData}>
         <defs>
-          <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity={0.15} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
@@ -28,7 +29,7 @@ export function KpiSparkline({
           type="monotone"
           dataKey="value"
           stroke={color}
-          strokeWidth={0.75}
+          strokeWidth={1.5}
           dot={false}
           activeDot={{ r: 2, fill: color }}
           isAnimationActive={false}
@@ -73,8 +74,14 @@ interface ChartTooltipProps {
 const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="card-glass px-3 py-2 text-xs space-y-1">
-      <p className="text-on-surface-variant font-medium">{label}</p>
+    <div
+      className="px-3 py-2 text-xs space-y-1 rounded-xl border"
+      style={{
+        background: "var(--chart-tooltip-bg)",
+        borderColor: "var(--chart-tooltip-border)",
+      }}
+    >
+      <p className="font-medium" style={{ color: "var(--chart-text)" }}>{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.stroke }}>
           {p.name}: <span className="font-semibold">{p.value}</span>
@@ -83,6 +90,18 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     </div>
   );
 };
+
+// Theme-aware custom tick components (inline styles support CSS vars; SVG presentation attrs don't)
+const XTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) => (
+  <text x={x} y={(y ?? 0) + 12} textAnchor="middle" style={{ fill: "var(--chart-text)", fontSize: "10px" }}>
+    {payload?.value}
+  </text>
+);
+const YTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string | number } }) => (
+  <text x={(x ?? 0) - 4} y={y} textAnchor="end" dominantBaseline="middle" style={{ fill: "var(--chart-text)", fontSize: "10px" }}>
+    {payload?.value}
+  </text>
+);
 
 export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
   if (data.length === 0) {
@@ -98,23 +117,23 @@ export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
         <defs>
           <linearGradient id="gSessions" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#c0c1ff" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#c0c1ff" stopOpacity={0} />
+            <stop offset="5%"  stopColor="var(--chart-line-primary)" stopOpacity={0.22} />
+            <stop offset="95%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="gDistance" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#81c784" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#81c784" stopOpacity={0} />
+            <stop offset="5%"  stopColor="var(--chart-line-secondary)" stopOpacity={0.22} />
+            <stop offset="95%" stopColor="var(--chart-line-secondary)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="rgba(70,69,85,0.2)" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="date" tick={{ fill: "#c7c4d8", fontSize: 10 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: "#c7c4d8", fontSize: 10 }} axisLine={false} tickLine={false} />
+        <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="date" tick={<XTick />} axisLine={false} tickLine={false} />
+        <YAxis tick={<YTick />} axisLine={false} tickLine={false} />
         <Tooltip content={<ChartTooltip />} />
         <Area
           type="monotone"
           dataKey="sessions"
           name="Sessions"
-          stroke="#c0c1ff"
+          stroke="var(--chart-line-primary)"
           strokeWidth={1.5}
           fill="url(#gSessions)"
           dot={false}
@@ -123,7 +142,7 @@ export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
           type="monotone"
           dataKey="distanceKm"
           name="Distance (km)"
-          stroke="#81c784"
+          stroke="var(--chart-line-secondary)"
           strokeWidth={1.5}
           fill="url(#gDistance)"
           dot={false}
