@@ -109,7 +109,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-4 mb-8">
-      <div className="pl-4" style={{ borderLeft: "3px solid hsl(var(--accent-lime))" }}>
+      <div className="pl-4" style={{ borderLeft: "3px solid hsl(145, 58%, 22%)" }}>
         <h1 className="font-lexend font-bold text-2xl text-on-surface">
           {title}
         </h1>
@@ -223,7 +223,7 @@ export function Avatar({ name, size = "md", className }: AvatarProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full bg-primary-container text-on-primary-container font-semibold shrink-0",
+        "flex items-center justify-center rounded-full bg-primary/15 text-primary font-semibold shrink-0",
         avatarSizeMap[size],
         className
       )}

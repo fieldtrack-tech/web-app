@@ -75,7 +75,7 @@ export function CheckInCard({ activeSession }: CheckInCardProps) {
       {isActive ? (
         <button
           className="btn-primary w-full"
-          style={{ background: "linear-gradient(135deg, hsl(var(--error)) 0%, hsl(var(--error-container)) 100%)" }}
+          style={{ background: "linear-gradient(135deg, hsl(4, 85%, 38%) 0%, hsl(4, 75%, 52%) 100%)" }}
           disabled={isPending}
           onClick={() => checkOut.mutate()}
         >

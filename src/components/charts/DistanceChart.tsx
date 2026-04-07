@@ -71,31 +71,45 @@ export function DistanceChart({ data = [] }: DistanceChartProps) {
 
   const maxKm = Math.max(...data.map((d) => d.km));
 
+  // Harmonized multi-color palette — green-dominant, with cyan/purple/yellow accents
+  const BAR_PALETTES = [
+    { id: "bpGreen",  stops: [{ off: "0%",   color: "#1a5c28", op: 1 }, { off: "100%", color: "#2da84e", op: 0.85 }] },
+    { id: "bpCyan",   stops: [{ off: "0%",   color: "#0e6b7a", op: 1 }, { off: "100%", color: "#22afc5", op: 0.85 }] },
+    { id: "bpPurple", stops: [{ off: "0%",   color: "#5b30a0", op: 1 }, { off: "100%", color: "#9b6fe0", op: 0.85 }] },
+    { id: "bpYellow", stops: [{ off: "0%",   color: "#8a6500", op: 1 }, { off: "100%", color: "#e9ab1e", op: 0.85 }] },
+    { id: "bpTeal",   stops: [{ off: "0%",   color: "#0b6b5a", op: 1 }, { off: "100%", color: "#1cbf9c", op: 0.85 }] },
+  ];
+
+  // Max bar always gets the bright green; others cycle through palette by index
+  const getBarFill = (entry: DayData, idx: number) => {
+    if (entry.km === maxKm) return "url(#bpGreen)";
+    return `url(#${BAR_PALETTES[((idx % (BAR_PALETTES.length - 1)) + 1)]?.id ?? "bpCyan"})`;
+  };
+
   return (
     <ResponsiveContainer width="100%" height={160}>
       <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }} barSize={22}>
         <defs>
-          <linearGradient id="gradBar" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stopColor="var(--chart-accent-cyan)" stopOpacity={1} />
-            <stop offset="100%" stopColor="var(--chart-accent-cyan)" stopOpacity={0.5} />
-          </linearGradient>
-          <linearGradient id="gradBarDim" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stopColor="var(--chart-line-primary)" stopOpacity={0.55} />
-            <stop offset="100%" stopColor="var(--chart-line-primary)" stopOpacity={0.2} />
-          </linearGradient>
+          {BAR_PALETTES.map(({ id, stops }) => (
+            <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+              {stops.map((s) => (
+                <stop key={s.off} offset={s.off} stopColor={s.color} stopOpacity={s.op} />
+              ))}
+            </linearGradient>
+          ))}
         </defs>
         <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="day" tick={<XTick />} axisLine={false} tickLine={false} />
         <YAxis tick={<YTick />} axisLine={false} tickLine={false} />
         <Tooltip
           content={<CustomTooltip />}
-          cursor={{ fill: "var(--chart-accent-cyan)", opacity: 0.06 }}
+          cursor={{ fill: "var(--chart-grid)", opacity: 0.5, radius: 6 }}
         />
-        <Bar dataKey="km" radius={[5, 5, 0, 0]}>
-          {data.map((entry) => (
+        <Bar dataKey="km" radius={[6, 6, 0, 0]}>
+          {data.map((entry, idx) => (
             <Cell
               key={entry.day}
-              fill={entry.km === maxKm ? "url(#gradBar)" : "url(#gradBarDim)"}
+              fill={getBarFill(entry, idx)}
             />
           ))}
         </Bar>

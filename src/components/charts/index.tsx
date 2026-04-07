@@ -10,7 +10,7 @@ interface SparklineProps {
 
 export function KpiSparkline({
   data,
-  color = "var(--chart-line-primary)",
+  color = "#2da84e",
   height = 40,
 }: SparklineProps) {
   const chartData = data.map((value, index) => ({ index, value }));
@@ -117,14 +117,22 @@ export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
         <defs>
           <linearGradient id="gSessions" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stopColor="var(--chart-line-primary)" stopOpacity={0.38} />
-            <stop offset="60%" stopColor="var(--chart-line-primary)" stopOpacity={0.1} />
-            <stop offset="100%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
+            <stop offset="0%"  stopColor="#1a5c28" stopOpacity={0.48} />
+            <stop offset="58%" stopColor="#2da84e" stopOpacity={0.14} />
+            <stop offset="100%" stopColor="#2da84e" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="gDistance" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stopColor="var(--chart-accent-cyan)" stopOpacity={0.38} />
-            <stop offset="60%" stopColor="var(--chart-accent-cyan)" stopOpacity={0.1} />
-            <stop offset="100%" stopColor="var(--chart-accent-cyan)" stopOpacity={0} />
+            <stop offset="0%"  stopColor="#0e6b7a" stopOpacity={0.42} />
+            <stop offset="58%" stopColor="#22afc5" stopOpacity={0.12} />
+            <stop offset="100%" stopColor="#22afc5" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="gSessionsStroke" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"  stopColor="#1a5c28" />
+            <stop offset="100%" stopColor="#2da84e" />
+          </linearGradient>
+          <linearGradient id="gDistanceStroke" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"  stopColor="#0e6b7a" />
+            <stop offset="100%" stopColor="#22afc5" />
           </linearGradient>
         </defs>
         <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
@@ -135,21 +143,21 @@ export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
           type="monotone"
           dataKey="sessions"
           name="Sessions"
-          stroke="var(--chart-line-primary)"
-          strokeWidth={2}
+          stroke="url(#gSessionsStroke)"
+          strokeWidth={2.5}
           fill="url(#gSessions)"
           dot={false}
-          activeDot={{ r: 5, fill: "var(--chart-line-primary)", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
+          activeDot={{ r: 5, fill: "#2da84e", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
         />
         <Area
           type="monotone"
           dataKey="distanceKm"
           name="Distance (km)"
-          stroke="var(--chart-accent-cyan)"
-          strokeWidth={2}
+          stroke="url(#gDistanceStroke)"
+          strokeWidth={2.5}
           fill="url(#gDistance)"
           dot={false}
-          activeDot={{ r: 5, fill: "var(--chart-accent-cyan)", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
+          activeDot={{ r: 5, fill: "#22afc5", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>
