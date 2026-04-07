@@ -12,29 +12,29 @@
 /* ── Light Mode (default) ──────────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --background:                  220 25% 97%;
-  --surface:                     220 20% 99%;
-  --surface-dim:                 220 15% 93%;
+  --background:                  220 14% 96%;
+  --surface:                     0 0% 100%;
+  --surface-dim:                 220 14% 93%;
   --surface-bright:              0 0% 100%;
   --surface-container-lowest:    0 0% 100%;
-  --surface-container-low:       220 25% 97%;
-  --surface-container:           220 20% 94%;
-  --surface-container-high:      220 20% 90%;
-  --surface-container-highest:   220 20% 85%;
-  --surface-variant:             220 20% 90%;
-  --surface-tint:                241 98% 65%;
+  --surface-container-low:       0 0% 100%;
+  --surface-container:           0 0% 100%;
+  --surface-container-high:      220 14% 97%;
+  --surface-container-highest:   220 14% 94%;
+  --surface-variant:             220 14% 94%;
+  --surface-tint:                145 52% 24%;
 
-  /* Primary — vibrant indigo */
-  --primary:                     241 98% 65%;
-  --primary-container:           241 80% 93%;
+  /* Primary — dark forest green */
+  --primary:                     145 52% 24%;
+  --primary-container:           145 52% 92%;
   --on-primary:                  0 0% 100%;
-  --on-primary-container:        241 80% 25%;
+  --on-primary-container:        145 52% 12%;
 
-  /* Secondary */
-  --secondary:                   241 38% 52%;
-  --secondary-container:         241 60% 93%;
+  /* Secondary — medium green */
+  --secondary:                   145 45% 36%;
+  --secondary-container:         145 45% 93%;
   --on-secondary:                0 0% 100%;
-  --on-secondary-container:      241 50% 22%;
+  --on-secondary-container:      145 45% 12%;
 
   /* Tertiary — warm orange */
   --tertiary:                    20 90% 50%;
@@ -49,47 +49,46 @@
   --on-error-container:          4 80% 22%;
 
   /* Text */
-  --on-background:               222 47% 11%;
-  --on-surface:                  222 47% 11%;
-  --on-surface-variant:          222 15% 38%;
+  --on-background:               220 25% 10%;
+  --on-surface:                  220 25% 10%;
+  --on-surface-variant:          220 12% 42%;
 
   /* Borders */
-  --outline:                     222 15% 60%;
-  --outline-variant:             222 20% 87%;
+  --outline:                     220 12% 62%;
+  --outline-variant:             220 16% 88%;
 
   /* Utility */
-  --success-green:               150 52% 38%;
+  --success-green:               142 71% 36%;
+  --shadow:                      220 25% 8%;
 
   /* Accent palette */
   --accent-purple:               270 80% 62%;
   --accent-cyan:                 190 80% 42%;
   --accent-pink:                 330 80% 62%;
   --accent-yellow:               45 95% 50%;
-  --accent-lime:                 78 75% 42%;
+  --accent-lime:                 145 62% 38%;
 
   /* Pre-computed full colors for SVG/canvas (charts, maps) */
-  --chart-text:                  hsl(222, 15%, 45%);
-  --chart-grid:                  hsl(222, 20%, 87%);
-  --chart-line-primary:          hsl(241, 98%, 65%);
-  --chart-line-secondary:        hsl(150, 52%, 38%);
-  --chart-tooltip-bg:            hsl(220, 20%, 99%);
-  --chart-tooltip-border:        hsl(222, 20%, 87%);
+  --chart-text:                  hsl(220, 12%, 45%);
+  --chart-grid:                  hsl(220, 16%, 88%);
+  --chart-line-primary:          hsl(145, 52%, 28%);
+  --chart-line-secondary:        hsl(142, 71%, 40%);
+  --chart-tooltip-bg:            hsl(0, 0%, 100%);
+  --chart-tooltip-border:        hsl(220, 16%, 88%);
 
   /* Accent chart colors (pre-computed full CSS values for SVG stroke/fill) */
-  --chart-accent-lime:           hsl(78, 75%, 42%);
+  --chart-accent-lime:           hsl(145, 62%, 38%);
   --chart-accent-cyan:           hsl(190, 80%, 42%);
   --chart-accent-purple:         hsl(270, 80%, 62%);
   --chart-accent-yellow:         hsl(45, 95%, 50%);
   --chart-accent-pink:           hsl(330, 80%, 62%);
 
-  --map-bg:                      hsl(220, 25%, 97%);
-  --map-control-bg:              hsl(220, 20%, 99%);
-  --map-control-border:          hsl(222, 20%, 87%);
-  --map-control-text:            hsl(222, 47%, 11%);
+  --map-bg:                      hsl(220, 14%, 96%);
+  --map-control-bg:              hsl(0, 0%, 100%);
+  --map-control-border:          hsl(220, 16%, 88%);
+  --map-control-text:            hsl(220, 25%, 10%);
 
   --radius: 9999px;
-  --font-public-sans: "Public Sans", sans-serif;
-  --font-lexend: "Lexend", sans-serif;
 }
 
 /* ── Dark Mode ─────────────────────────────────────────────────────────── */
@@ -169,6 +168,7 @@
   --map-control-bg:              hsl(229, 36%, 19%);
   --map-control-border:          hsl(237, 12%, 27%);
   --map-control-text:            hsl(236, 100%, 97%);
+  --shadow:                      232 47% 2%;
 }
 
 /* ─── Base Reset ─────────────────────────────────────────────────────────── */
@@ -230,12 +230,12 @@
     @apply rounded-2xl p-6;
     background: hsl(var(--surface-container));
     border: 1px solid hsl(var(--outline-variant) / 0.5);
-    box-shadow: 0 1px 3px hsl(var(--background) / 0.4), 0 4px 12px hsl(var(--background) / 0.12);
+    box-shadow: 0 1px 3px hsl(var(--shadow) / 0.07), 0 4px 14px hsl(var(--shadow) / 0.05);
     transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
   .card:hover {
     border-color: hsl(var(--outline-variant) / 0.8);
-    box-shadow: 0 2px 8px hsl(var(--background) / 0.5), 0 8px 24px hsl(var(--background) / 0.22);
+    box-shadow: 0 2px 8px hsl(var(--shadow) / 0.10), 0 8px 24px hsl(var(--shadow) / 0.07);
     transform: translateY(-1px);
   }
   .dark .card {
@@ -255,14 +255,14 @@
     @apply rounded-xl p-4;
     background: hsl(var(--surface-container));
     border: 1px solid hsl(var(--outline-variant) / 0.5);
-    box-shadow: 0 1px 3px hsl(var(--background) / 0.2);
+    box-shadow: 0 1px 3px hsl(var(--shadow) / 0.06);
   }
 
   .card-high {
     @apply rounded-2xl p-6;
     background: hsl(var(--surface-container-high));
     border: 1px solid hsl(var(--outline-variant) / 0.5);
-    box-shadow: 0 1px 3px hsl(var(--background) / 0.4), 0 4px 12px hsl(var(--background) / 0.12);
+    box-shadow: 0 1px 3px hsl(var(--shadow) / 0.07), 0 4px 14px hsl(var(--shadow) / 0.05);
   }
 
   .card-glass {
@@ -427,8 +427,8 @@
     color: hsl(var(--on-surface));
   }
   .nav-item.active {
-    background: hsl(var(--accent-lime) / 0.12);
-    color: hsl(var(--accent-lime));
+    background: hsl(var(--primary));
+    color: hsl(var(--on-primary));
     font-weight: 600;
   }
   .dark .nav-item.active {
@@ -436,6 +436,9 @@
     color: hsl(var(--accent-lime));
   }
   .nav-item.active::before {
+    content: none;
+  }
+  .dark .nav-item.active::before {
     content: '';
     position: absolute;
     left: 0;
@@ -447,6 +450,9 @@
     box-shadow: 0 0 10px hsl(var(--accent-lime) / 0.6);
   }
   .nav-item.active svg {
+    color: hsl(var(--on-primary));
+  }
+  .dark .nav-item.active svg {
     color: hsl(var(--accent-lime));
   }
 
@@ -458,6 +464,19 @@
     background:
       linear-gradient(160deg, hsl(var(--primary) / 0.08) 0%, transparent 50%),
       hsl(var(--surface-container));
+  }
+
+  /* ── KPI Card — Highlighted (first card, green gradient) ─ */
+  .kpi-card-highlight {
+    @apply rounded-2xl p-6 flex flex-col gap-4;
+    background: linear-gradient(145deg, hsl(145, 58%, 17%) 0%, hsl(145, 50%, 29%) 100%);
+    border: none;
+    box-shadow: 0 4px 20px hsl(145 54% 20% / 0.30), 0 2px 8px hsl(145 54% 20% / 0.20);
+    color: white;
+  }
+  .dark .kpi-card-highlight {
+    background: linear-gradient(145deg, hsl(145, 52%, 14%) 0%, hsl(145, 46%, 24%) 100%);
+    box-shadow: 0 4px 20px hsl(145 52% 5% / 0.55);
   }
 
   /* ── Chart Card (enhanced) ───────────────────── */

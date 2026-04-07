@@ -52,13 +52,14 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle="Organisation overview" />
 
-      {/* KPI row — color-coded per metric */}
+      {/* KPI row — first card highlighted green, rest neutral */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           title="Total Sessions"
           value={String(summary?.totalSessions ?? 0)}
           icon={<Activity className="w-5 h-5" />}
           accent="primary"
+          highlighted
         />
         <KpiCard
           title="Active Employees"

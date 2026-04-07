@@ -32,7 +32,7 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
   }, [menuOpen]);
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 md:px-6 bg-surface-container-low border-b border-outline-variant/20">
+    <header className="flex items-center justify-between h-16 px-4 md:px-6 bg-transparent">
       {/* Left: hamburger (mobile) */}
       <div className="flex items-center gap-2">
         {/* Hamburger — only visible on mobile */}
@@ -46,7 +46,7 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
 
         {/* Org label (admin) — display only, no dropdown */}
         {isAdmin && (
-          <div className="hidden sm:flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-medium text-on-surface-variant bg-surface-container select-none">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-medium text-on-surface-variant bg-surface select-none border border-outline-variant/30">
             <Building2 className="w-3.5 h-3.5" />
             {orgName ?? "Organization"}
           </div>
@@ -55,7 +55,7 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
 
       {/* Center: site-wide search (admin only, hidden on mobile) */}
       {isAdmin && (
-        <div className="hidden md:block flex-1 max-w-md mx-4">
+        <div className="hidden md:block flex-1 max-w-sm mx-4">
           <SearchBar />
         </div>
       )}
@@ -70,10 +70,10 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
           <Bell className="w-4 h-4" />
         </div>
 
-        {/* Avatar with user dropdown */}
-        <div className="relative" ref={menuRef}>
+        {/* Avatar + user info + dropdown */}
+        <div className="relative flex items-center gap-2.5" ref={menuRef}>
           <button
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-container text-on-primary-container text-xs font-bold uppercase hover:ring-2 hover:ring-primary/40 transition-all"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase hover:ring-2 hover:ring-primary/40 transition-all shrink-0"
             aria-label="User menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
@@ -81,8 +81,16 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
             {initials}
           </button>
 
+          {/* Name + email — visible on md+ */}
+          <div className="hidden md:flex flex-col items-start">
+            <span className="text-sm font-semibold text-on-surface leading-tight">
+              {user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User"}
+            </span>
+            <span className="text-xs text-on-surface-variant leading-tight truncate max-w-[140px]">{user?.email}</span>
+          </div>
+
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-50 w-52 rounded-2xl border border-outline-variant/30 bg-surface-container-high shadow-ambient py-1.5 animate-fade-in">
+            <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-outline-variant/30 bg-surface-container-high shadow-ambient py-1.5 animate-fade-in">
               {/* User info */}
               <div className="px-3 py-2 border-b border-outline-variant/20">
                 <p className="text-xs font-semibold text-on-surface truncate">

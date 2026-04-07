@@ -39,7 +39,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const isAdmin = role === "ADMIN";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background md:pr-3 md:pb-3 md:pt-3">
       {/* Mobile overlay backdrop */}
       {sidebarOpen && (
         <div
@@ -57,7 +57,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden md:rounded-2xl md:bg-background">
         <TopBar onMenuClick={() => setSidebarOpen((v) => !v)} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">
           <ErrorBoundary>{children}</ErrorBoundary>

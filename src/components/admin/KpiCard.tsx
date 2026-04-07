@@ -15,6 +15,7 @@ interface KpiCardProps {
   sparkData?: number[];
   icon?: React.ReactNode;
   accent?: "primary" | "success" | "error" | "tertiary" | "lime" | "cyan" | "purple" | "yellow";
+  highlighted?: boolean;
   className?: string;
 }
 
@@ -95,9 +96,52 @@ export function KpiCard({
   sparkData,
   icon,
   accent = "primary",
+  highlighted = false,
   className,
 }: KpiCardProps) {
   const { iconBg, iconText, sparkColor, borderColor, glowColor } = accentMap[accent] ?? accentMap.primary;
+
+  // Highlighted variant — dark green gradient, white text
+  if (highlighted) {
+    return (
+      <div className={cn("kpi-card-highlight animate-fade-in relative overflow-hidden", className)}>
+        {/* Header row */}
+        <div className="relative flex items-start justify-between gap-2">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              {title}
+            </p>
+            <p className="font-sans font-bold text-3xl text-white leading-none">
+              {value}
+            </p>
+            {subtitle && (
+              <p className="text-xs text-white/70">{subtitle}</p>
+            )}
+          </div>
+          {icon && (
+            <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl shrink-0 bg-white/15">
+              <span className="text-white">{icon}</span>
+            </div>
+          )}
+        </div>
+        {sparkData && (
+          <div className="relative -mx-1">
+            <KpiSparkline data={sparkData} color="rgba(255,255,255,0.5)" height={40} />
+          </div>
+        )}
+        {trend && (
+          <div className="relative flex items-center gap-1.5">
+            {trend.direction === "up" && <TrendingUp className="w-3.5 h-3.5 text-white/80" />}
+            {trend.direction === "down" && <TrendingDown className="w-3.5 h-3.5 text-white/80" />}
+            {trend.direction === "neutral" && <Minus className="w-3.5 h-3.5 text-white/80" />}
+            <span className="text-xs font-medium text-white/80">
+              {trend.direction === "up" ? "+" : ""}{trend.value}%
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

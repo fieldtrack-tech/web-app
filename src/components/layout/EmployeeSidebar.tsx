@@ -36,18 +36,18 @@ export function EmployeeSidebar({ isMobileOpen = false, onClose }: EmployeeSideb
     <aside
       className={cn(
         "fixed inset-y-0 left-0 z-50 flex flex-col w-64",
-        "border-r border-outline-variant/20",
         "transition-transform duration-300 ease-in-out",
         isMobileOpen ? "translate-x-0" : "-translate-x-full",
-        "md:relative md:translate-x-0 md:z-auto"
+        "md:relative md:translate-x-0 md:z-auto md:rounded-2xl md:my-3 md:ml-3"
       )}
       style={{
-        background: "linear-gradient(180deg, hsl(var(--surface-container-low)) 0%, hsl(var(--surface-container-lowest)) 100%)",
+        background: "hsl(var(--surface))",
+        boxShadow: "0 1px 3px hsl(var(--shadow) / 0.07), 0 4px 20px hsl(var(--shadow) / 0.06)",
       }}
     >
       {/* Logo + mobile close */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-outline-variant/15">
-        <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-accent-lime/15 ring-1 ring-accent-lime/25 shrink-0">
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-outline-variant/10">
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 ring-1 ring-primary/20 shrink-0">
           <Image
             src="/logo/logo.png"
             alt="FieldTrack"
@@ -61,7 +61,7 @@ export function EmployeeSidebar({ isMobileOpen = false, onClose }: EmployeeSideb
           <span className="font-lexend font-bold text-base text-on-surface tracking-tight block">
             FieldTrack
           </span>
-          <span className="text-[10px] font-medium text-accent-cyan/70 uppercase tracking-widest">Field App</span>
+          <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-widest">Field App</span>
         </div>
         <button
           className="md:hidden btn-icon"
@@ -99,7 +99,7 @@ export function EmployeeSidebar({ isMobileOpen = false, onClose }: EmployeeSideb
       </nav>
 
       {/* Bottom actions */}
-      <div className="px-3 pb-5 space-y-0.5 border-t border-outline-variant/15 pt-3">
+      <div className="px-3 pb-5 space-y-0.5 border-t border-outline-variant/10 pt-3">
         <button
           onClick={logout}
           className="nav-item w-full text-error hover:text-error hover:bg-error-container/10"
