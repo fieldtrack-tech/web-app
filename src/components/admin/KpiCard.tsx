@@ -14,16 +14,77 @@ interface KpiCardProps {
   };
   sparkData?: number[];
   icon?: React.ReactNode;
-  accent?: "primary" | "success" | "error" | "tertiary";
+  accent?: "primary" | "success" | "error" | "tertiary" | "lime" | "cyan" | "purple" | "yellow";
   className?: string;
 }
 
+interface AccentConfig {
+  iconBg: string;
+  iconText: string;
+  sparkColor: string;
+  borderColor: string;
+  glowColor: string;
+}
+
 // Tailwind classes — engine resolves CSS vars at runtime, opacity modifier works
-const accentMap: Record<string, { iconBg: string; iconText: string; sparkColor: string }> = {
-  primary:  { iconBg: "bg-primary/10",       iconText: "text-primary",       sparkColor: "var(--chart-line-primary)" },
-  success:  { iconBg: "bg-success-green/10", iconText: "text-success-green", sparkColor: "var(--chart-line-secondary)" },
-  error:    { iconBg: "bg-error/10",         iconText: "text-error",         sparkColor: "var(--chart-line-primary)" },
-  tertiary: { iconBg: "bg-tertiary/10",      iconText: "text-tertiary",      sparkColor: "var(--chart-line-primary)" },
+// sparkColor must use pre-computed CSS var (not raw HSL channels) for SVG stroke compatibility
+const accentMap: Record<string, AccentConfig> = {
+  primary:  {
+    iconBg: "bg-primary/10",
+    iconText: "text-primary",
+    sparkColor: "var(--chart-line-primary)",
+    borderColor: "hsl(var(--primary))",
+    glowColor: "hsl(var(--primary) / 0.07)",
+  },
+  success:  {
+    iconBg: "bg-success-green/10",
+    iconText: "text-success-green",
+    sparkColor: "var(--chart-line-secondary)",
+    borderColor: "hsl(var(--success-green))",
+    glowColor: "hsl(var(--success-green) / 0.07)",
+  },
+  error:    {
+    iconBg: "bg-error/10",
+    iconText: "text-error",
+    sparkColor: "var(--chart-line-primary)",
+    borderColor: "hsl(var(--error))",
+    glowColor: "hsl(var(--error) / 0.07)",
+  },
+  tertiary: {
+    iconBg: "bg-tertiary/10",
+    iconText: "text-tertiary",
+    sparkColor: "var(--chart-line-primary)",
+    borderColor: "hsl(var(--tertiary))",
+    glowColor: "hsl(var(--tertiary) / 0.07)",
+  },
+  lime:     {
+    iconBg: "bg-accent-lime/10",
+    iconText: "text-accent-lime",
+    sparkColor: "var(--chart-accent-lime)",
+    borderColor: "hsl(var(--accent-lime))",
+    glowColor: "hsl(var(--accent-lime) / 0.07)",
+  },
+  cyan:     {
+    iconBg: "bg-accent-cyan/10",
+    iconText: "text-accent-cyan",
+    sparkColor: "var(--chart-accent-cyan)",
+    borderColor: "hsl(var(--accent-cyan))",
+    glowColor: "hsl(var(--accent-cyan) / 0.07)",
+  },
+  purple:   {
+    iconBg: "bg-accent-purple/10",
+    iconText: "text-accent-purple",
+    sparkColor: "var(--chart-accent-purple)",
+    borderColor: "hsl(var(--accent-purple))",
+    glowColor: "hsl(var(--accent-purple) / 0.07)",
+  },
+  yellow:   {
+    iconBg: "bg-accent-yellow/10",
+    iconText: "text-accent-yellow",
+    sparkColor: "var(--chart-accent-yellow)",
+    borderColor: "hsl(var(--accent-yellow))",
+    glowColor: "hsl(var(--accent-yellow) / 0.07)",
+  },
 };
 
 export function KpiCard({
@@ -36,12 +97,22 @@ export function KpiCard({
   accent = "primary",
   className,
 }: KpiCardProps) {
-  const { iconBg, iconText, sparkColor } = accentMap[accent];
+  const { iconBg, iconText, sparkColor, borderColor, glowColor } = accentMap[accent] ?? accentMap.primary;
 
   return (
-    <div className={cn("kpi-card animate-fade-in", className)}>
+    <div
+      className={cn("kpi-card animate-fade-in relative overflow-hidden", className)}
+      style={{ borderTop: `2px solid ${borderColor}` }}
+    >
+      {/* Accent glow overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse at 0% 0%, ${glowColor}, transparent 60%)` }}
+        aria-hidden="true"
+      />
+
       {/* Header row */}
-      <div className="flex items-start justify-between gap-2">
+      <div className="relative flex items-start justify-between gap-2">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
             {title}
@@ -55,7 +126,7 @@ export function KpiCard({
         </div>
 
         {icon && (
-          <div className={cn("flex items-center justify-center w-10 h-10 rounded-xl shrink-0", iconBg)}>
+          <div className={cn("relative flex items-center justify-center w-11 h-11 rounded-2xl shrink-0 ring-1 ring-inset ring-white/5", iconBg)}>
             <span className={iconText}>{icon}</span>
           </div>
         )}
@@ -63,14 +134,14 @@ export function KpiCard({
 
       {/* Sparkline */}
       {sparkData && (
-        <div className="-mx-1">
+        <div className="relative -mx-1">
           <KpiSparkline data={sparkData} color={sparkColor} height={40} />
         </div>
       )}
 
       {/* Trend */}
       {trend && (
-        <div className="flex items-center gap-1.5">
+        <div className="relative flex items-center gap-1.5">
           {trend.direction === "up" && (
             <TrendingUp className="w-3.5 h-3.5 text-success-green" />
           )}

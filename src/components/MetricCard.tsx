@@ -27,17 +27,29 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "card transition-transform hover:-translate-y-0.5",
-        highlighted && "bg-primary/10 border border-primary/30",
+        "card relative overflow-hidden transition-transform hover:-translate-y-0.5",
+        highlighted && "border-accent-lime/30",
         className
       )}
+      style={highlighted ? { borderTop: "2px solid hsl(var(--accent-lime))" } : undefined}
     >
-      <div className="flex items-center justify-between mb-3">
+      {highlighted && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse at 0% 0%, hsl(var(--accent-lime) / 0.06), transparent 60%)" }}
+          aria-hidden="true"
+        />
+      )}
+      <div className="relative flex items-center justify-between mb-3">
         <p className="section-heading">{title}</p>
-        {icon ? <span className="text-primary">{icon}</span> : null}
+        {icon ? (
+          <span className={cn("p-2 rounded-xl", highlighted ? "text-accent-lime bg-accent-lime/10" : "text-primary bg-primary/10")}>
+            {icon}
+          </span>
+        ) : null}
       </div>
-      <p className="font-manrope text-3xl font-bold text-on-surface tabular-nums">{display}</p>
-      {description ? <p className="text-xs text-on-surface-variant mt-2">{description}</p> : null}
+      <p className="relative font-manrope text-3xl font-bold text-on-surface tabular-nums">{display}</p>
+      {description ? <p className="relative text-xs text-on-surface-variant mt-2">{description}</p> : null}
     </div>
   );
 }

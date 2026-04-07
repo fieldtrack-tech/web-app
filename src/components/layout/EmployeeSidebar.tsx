@@ -35,25 +35,34 @@ export function EmployeeSidebar({ isMobileOpen = false, onClose }: EmployeeSideb
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-surface-container-low",
+        "fixed inset-y-0 left-0 z-50 flex flex-col w-64",
+        "border-r border-outline-variant/20",
         "transition-transform duration-300 ease-in-out",
         isMobileOpen ? "translate-x-0" : "-translate-x-full",
         "md:relative md:translate-x-0 md:z-auto"
       )}
+      style={{
+        background: "linear-gradient(180deg, hsl(var(--surface-container-low)) 0%, hsl(var(--surface-container-lowest)) 100%)",
+      }}
     >
       {/* Logo + mobile close */}
-      <div className="flex items-center gap-3 px-5 py-5">
-        <Image
-          src="/logo/logo.png"
-          alt="FieldTrack"
-          width={36}
-          height={36}
-          className="h-9 w-9 rounded-full object-contain"
-          priority
-        />
-        <span className="font-manrope font-bold text-lg text-on-surface tracking-tight flex-1">
-          FieldTrack
-        </span>
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-outline-variant/15">
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-accent-lime/15 ring-1 ring-accent-lime/25 shrink-0">
+          <Image
+            src="/logo/logo.png"
+            alt="FieldTrack"
+            width={36}
+            height={36}
+            className="h-8 w-8 rounded-full object-contain"
+            priority
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="font-lexend font-bold text-base text-on-surface tracking-tight block">
+            FieldTrack
+          </span>
+          <span className="text-[10px] font-medium text-accent-cyan/70 uppercase tracking-widest">Field App</span>
+        </div>
         <button
           className="md:hidden btn-icon"
           onClick={onClose}
@@ -64,7 +73,7 @@ export function EmployeeSidebar({ isMobileOpen = false, onClose }: EmployeeSideb
       </div>
 
       {/* Section label */}
-      <div className="px-5 pb-3">
+      <div className="px-5 pt-5 pb-2">
         <span className="section-heading">Main Menu</span>
       </div>
 
@@ -90,7 +99,7 @@ export function EmployeeSidebar({ isMobileOpen = false, onClose }: EmployeeSideb
       </nav>
 
       {/* Bottom actions */}
-      <div className="px-3 pb-5 space-y-0.5">
+      <div className="px-3 pb-5 space-y-0.5 border-t border-outline-variant/15 pt-3">
         <button
           onClick={logout}
           className="nav-item w-full text-error hover:text-error hover:bg-error-container/10"

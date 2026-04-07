@@ -63,17 +63,40 @@ export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl", on
 
       fleet.forEach((member) => {
         const color = member.status === "ACTIVE" ? activeColor : inactiveColor;
-        const icon = L.divIcon({
-          className: "",
-          html: `<div style="
-            width:12px;height:12px;
-            border-radius:50%;
-            background:${color};
-            border:2px solid white;
-            box-shadow:0 0 8px ${color}99;
-          "></div>`,
-          iconAnchor: [6, 6],
-        });
+
+        const icon = member.status === "ACTIVE"
+          ? L.divIcon({
+              className: "",
+              html: `<div style="position:relative;width:20px;height:20px;">
+                <div style="
+                  position:absolute;inset:0;
+                  border-radius:50%;
+                  background:${color};
+                  opacity:0.25;
+                  transform:scale(1.8);
+                "></div>
+                <div style="
+                  position:absolute;inset:0;
+                  border-radius:50%;
+                  background:${color};
+                  border:2.5px solid rgba(255,255,255,0.9);
+                  box-shadow:0 0 12px ${color}bb, 0 0 4px ${color}66;
+                "></div>
+              </div>`,
+              iconAnchor: [10, 10],
+            })
+          : L.divIcon({
+              className: "",
+              html: `<div style="
+                width:11px;height:11px;
+                border-radius:50%;
+                background:${color};
+                border:2px solid rgba(255,255,255,0.7);
+                box-shadow:0 0 6px ${color}66;
+                opacity:0.75;
+              "></div>`,
+              iconAnchor: [5, 5],
+            });
 
         L.marker([member.latitude, member.longitude], { icon })
           .bindPopup(

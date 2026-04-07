@@ -38,42 +38,52 @@ const BG_MAP: Record<FeedEvent["type"], string> = {
 };
 
 export function ActivityFeed({ events = [] }: ActivityFeedProps) {
-  if (events.length === 0) {
-    return (
-      <p className="text-sm text-on-surface-variant">No recent activity available.</p>
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      {events.map((ev) => (
-        <div
-          key={ev.id}
-          className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-container-high/50 transition-colors"
-        >
-          {/* Icon */}
-          <div
-            className={`flex items-center justify-center w-7 h-7 rounded-lg shrink-0 ${BG_MAP[ev.type]}`}
-          >
-            {ICON_MAP[ev.type]}
-          </div>
+    <div className="card flex flex-col gap-4 min-h-0">
+      {/* Header */}
+      <div className="flex items-center justify-between shrink-0">
+        <p className="font-lexend font-bold text-base text-on-surface">Live Activity</p>
+        {events.length > 0 && (
+          <span className="badge-info tabular-nums">{events.length}</span>
+        )}
+      </div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-on-surface truncate">
-                {ev.actorName}
-              </span>
-              <span className="text-xs text-on-surface-variant shrink-0">
-                {timeAgo(ev.timestamp)}
-              </span>
+      {events.length === 0 ? (
+        <p className="text-sm text-on-surface-variant py-6 text-center">
+          No recent activity available.
+        </p>
+      ) : (
+        <div className="space-y-1 overflow-y-auto max-h-72 no-scrollbar">
+          {events.map((ev) => (
+            <div
+              key={ev.id}
+              className="flex items-start gap-3 px-2 py-2.5 rounded-xl hover:bg-surface-container-high/60 transition-colors duration-150"
+            >
+              {/* Icon */}
+              <div
+                className={`flex items-center justify-center w-7 h-7 rounded-lg shrink-0 ${BG_MAP[ev.type]}`}
+              >
+                {ICON_MAP[ev.type]}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-on-surface truncate">
+                    {ev.actorName}
+                  </span>
+                  <span className="text-[11px] text-on-surface-variant shrink-0">
+                    {timeAgo(ev.timestamp)}
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+                  {ev.message}
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">
-              {ev.message}
-            </p>
-          </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

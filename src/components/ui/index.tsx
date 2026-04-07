@@ -109,8 +109,8 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-4 mb-8">
-      <div>
-        <h1 className="font-manrope font-bold text-2xl text-on-surface">
+      <div className="pl-4" style={{ borderLeft: "3px solid hsl(var(--accent-lime))" }}>
+        <h1 className="font-lexend font-bold text-2xl text-on-surface">
           {title}
         </h1>
         {subtitle && (

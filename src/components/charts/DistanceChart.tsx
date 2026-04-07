@@ -73,20 +73,29 @@ export function DistanceChart({ data = [] }: DistanceChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={160}>
-      <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }} barSize={20}>
+      <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }} barSize={22}>
+        <defs>
+          <linearGradient id="gradBar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stopColor="var(--chart-accent-cyan)" stopOpacity={1} />
+            <stop offset="100%" stopColor="var(--chart-accent-cyan)" stopOpacity={0.5} />
+          </linearGradient>
+          <linearGradient id="gradBarDim" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stopColor="var(--chart-line-primary)" stopOpacity={0.55} />
+            <stop offset="100%" stopColor="var(--chart-line-primary)" stopOpacity={0.2} />
+          </linearGradient>
+        </defs>
         <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="day" tick={<XTick />} axisLine={false} tickLine={false} />
         <YAxis tick={<YTick />} axisLine={false} tickLine={false} />
         <Tooltip
           content={<CustomTooltip />}
-          cursor={{ fill: "var(--chart-line-primary)", opacity: 0.05 }}
+          cursor={{ fill: "var(--chart-accent-cyan)", opacity: 0.06 }}
         />
-        <Bar dataKey="km" radius={[4, 4, 0, 0]}>
+        <Bar dataKey="km" radius={[5, 5, 0, 0]}>
           {data.map((entry) => (
             <Cell
               key={entry.day}
-              fill={entry.km === maxKm ? "var(--chart-line-primary)" : "var(--chart-line-primary)"}
-              fillOpacity={entry.km === maxKm ? 1 : 0.35}
+              fill={entry.km === maxKm ? "url(#gradBar)" : "url(#gradBarDim)"}
             />
           ))}
         </Bar>

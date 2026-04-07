@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, MapPin, Activity, Route } from "lucide-react";
+import { Users, MapPin, Activity, Route, TrendingUp, Map } from "lucide-react";
 import { useOrgSummary, useSessionTrend } from "@/hooks/queries/useAnalytics";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle="Organisation overview" />
 
-      {/* KPI row */}
+      {/* KPI row — color-coded per metric */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           title="Total Sessions"
@@ -64,38 +64,64 @@ export default function AdminDashboardPage() {
           title="Active Employees"
           value={String(summary?.activeEmployeesCount ?? 0)}
           icon={<Users className="w-5 h-5" />}
-          accent="success"
+          accent="lime"
         />
         <KpiCard
           title="Total Distance"
           value={`${(summary?.totalDistanceKm ?? 0).toFixed(1)} km`}
           icon={<Route className="w-5 h-5" />}
-          accent="tertiary"
+          accent="cyan"
         />
         <KpiCard
           title="Total Expenses"
           value={String(summary?.totalExpenses ?? 0)}
           icon={<MapPin className="w-5 h-5" />}
-          accent={summary?.totalExpenses ? "error" : "primary"}
+          accent="purple"
         />
       </div>
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card space-y-3">
-          <p className="font-manrope font-bold text-on-surface">Activity Trend</p>
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-lexend font-bold text-base text-on-surface">Activity Trend</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">Check-ins over time</p>
+            </div>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+          </div>
           <ActivityTrendChart data={activityData} />
         </div>
-        <div className="card space-y-3">
-          <p className="font-manrope font-bold text-on-surface">Distance — Last 7 Days</p>
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-lexend font-bold text-base text-on-surface">Distance Covered</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">Last 7 days (km)</p>
+            </div>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent-cyan/10">
+              <Route className="w-4 h-4 text-accent-cyan" />
+            </div>
+          </div>
           <DistanceChart data={distanceData} />
         </div>
       </div>
 
       {/* Map + feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card space-y-3">
-          <p className="font-manrope font-bold text-on-surface">Live Fleet</p>
+        <div className="lg:col-span-2 card space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-lexend font-bold text-base text-on-surface">Live Fleet</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">
+                {fleet.filter((f) => f.status === "ACTIVE").length} active · {fleet.length} total
+              </p>
+            </div>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent-lime/10">
+              <Map className="w-4 h-4 text-accent-lime" />
+            </div>
+          </div>
           <FleetMap fleet={fleet} className="h-72 rounded-xl overflow-hidden" />
         </div>
         <ActivityFeed />

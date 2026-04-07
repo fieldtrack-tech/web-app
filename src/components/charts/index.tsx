@@ -117,12 +117,14 @@ export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
         <defs>
           <linearGradient id="gSessions" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="var(--chart-line-primary)" stopOpacity={0.22} />
-            <stop offset="95%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
+            <stop offset="0%"  stopColor="var(--chart-line-primary)" stopOpacity={0.38} />
+            <stop offset="60%" stopColor="var(--chart-line-primary)" stopOpacity={0.1} />
+            <stop offset="100%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="gDistance" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="var(--chart-line-secondary)" stopOpacity={0.22} />
-            <stop offset="95%" stopColor="var(--chart-line-secondary)" stopOpacity={0} />
+            <stop offset="0%"  stopColor="var(--chart-accent-cyan)" stopOpacity={0.38} />
+            <stop offset="60%" stopColor="var(--chart-accent-cyan)" stopOpacity={0.1} />
+            <stop offset="100%" stopColor="var(--chart-accent-cyan)" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
@@ -134,18 +136,20 @@ export function OrgAnalyticsChart({ data = [] }: OrgAnalyticsChartProps) {
           dataKey="sessions"
           name="Sessions"
           stroke="var(--chart-line-primary)"
-          strokeWidth={1.5}
+          strokeWidth={2}
           fill="url(#gSessions)"
           dot={false}
+          activeDot={{ r: 5, fill: "var(--chart-line-primary)", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
         />
         <Area
           type="monotone"
           dataKey="distanceKm"
           name="Distance (km)"
-          stroke="var(--chart-line-secondary)"
-          strokeWidth={1.5}
+          stroke="var(--chart-accent-cyan)"
+          strokeWidth={2}
           fill="url(#gDistance)"
           dot={false}
+          activeDot={{ r: 5, fill: "var(--chart-accent-cyan)", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>

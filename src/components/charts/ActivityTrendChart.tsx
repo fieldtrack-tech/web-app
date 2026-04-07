@@ -78,8 +78,9 @@ export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
       <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
         <defs>
           <linearGradient id="gradCheckIns" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="var(--chart-line-primary)" stopOpacity={0.22} />
-            <stop offset="95%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
+            <stop offset="0%"  stopColor="var(--chart-line-primary)" stopOpacity={0.4} />
+            <stop offset="60%" stopColor="var(--chart-line-primary)" stopOpacity={0.12} />
+            <stop offset="100%" stopColor="var(--chart-line-primary)" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
@@ -91,10 +92,10 @@ export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
           dataKey="checkIns"
           name="Check-ins"
           stroke="var(--chart-line-primary)"
-          strokeWidth={1.5}
+          strokeWidth={2}
           fill="url(#gradCheckIns)"
           dot={false}
-          activeDot={{ r: 4, fill: "var(--chart-line-primary)" }}
+          activeDot={{ r: 5, fill: "var(--chart-line-primary)", stroke: "var(--chart-tooltip-bg)", strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>
