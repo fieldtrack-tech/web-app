@@ -13,10 +13,11 @@ export const attendanceApi = {
       limit: String(limit),
     }),
 
-  orgSessions: (page = 1, limit = 50) =>
+  orgSessions: (page = 1, limit = 50, status?: string) =>
     apiGetPaginated<AttendanceSession>(API.adminSessions, {
       page: String(page),
       limit: String(limit),
+      ...(status && status !== "all" ? { status } : {}),
     }),
 
   allOrgSessions: () =>

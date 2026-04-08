@@ -152,7 +152,13 @@ export function EmployeeTable() {
                       </span>
                     </td>
                     <td>
-                      <StatusBadge status={emp.is_checked_in ? "ACTIVE" : "CLOSED"} />
+                      <StatusBadge status={
+                        emp.activity_status
+                        ?? (emp.is_checked_in ? "ACTIVE"
+                          : emp.last_check_out_at && (Date.now() - new Date(emp.last_check_out_at).getTime() < 86_400_000)
+                            ? "RECENT"
+                            : "INACTIVE")
+                      } />
                     </td>
                     <td className="text-on-surface-variant">
                       {emp.last_location_at

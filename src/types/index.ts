@@ -192,6 +192,7 @@ export interface Employee {
   last_location_at?: string | null;
   last_latitude?: number | null;
   last_longitude?: number | null;
+  activity_status?: ActivityStatus;
 }
 
 export interface AuditLog {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAllOrgSessions } from "@/hooks/queries/useSessions";
+import { useSegmentedOrgSessions } from "@/hooks/queries/useSessions";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
@@ -24,7 +24,14 @@ export default function AdminSessionsPage() {
   const { permissions } = useAuth();
   const [tab, setTab] = useState<FilterTab>("all");
 
-  const { data: sessions, isLoading, error, refetch } = useAllOrgSessions();
+  const {
+    data: sessions,
+    isLoading,
+    isLoadingRecent,
+    isLoadingInactive,
+    error,
+    refetch,
+  } = useSegmentedOrgSessions();
 
   const grouped = useMemo(() => {
     const map = new Map<string, AttendanceSession[]>();
@@ -43,7 +50,14 @@ export default function AdminSessionsPage() {
       return { employeeId, latest, status, count: sorted.length };
     });
 
-    return rows.sort((a, b) => new Date(b.latest.checkin_at).getTime() - new Date(a.latest.checkin_at).getTime());
+    // Sort by status priority: ACTIVE → RECENT → INACTIVE, then by checkin_at DESC
+    const statusPriority = (s: ActivityStatus): number =>
+      s === "ACTIVE" ? 1 : s === "RECENT" ? 2 : 3;
+    return rows.sort((a, b) => {
+      const diff = statusPriority(a.status) - statusPriority(b.status);
+      if (diff !== 0) return diff;
+      return new Date(b.latest.checkin_at).getTime() - new Date(a.latest.checkin_at).getTime();
+    });
   }, [sessions]);
 
   if (!permissions.viewOrgSessions) return null;
@@ -65,6 +79,8 @@ export default function AdminSessionsPage() {
             className={`px-3 py-1.5 rounded-md text-xs font-medium ${tab === k ? "bg-surface-container text-on-surface" : "text-on-surface-variant"}`}
           >
             {k}
+            {k === "RECENT" && isLoadingRecent ? " …" : ""}
+            {k === "INACTIVE" && isLoadingInactive ? " …" : ""}
           </button>
         ))}
       </div>

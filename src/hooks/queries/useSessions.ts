@@ -1,11 +1,9 @@
 import {
   keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
   useQuery,
+  useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { attendanceApi } from "@/lib/api/attendance";
 import type { AttendanceSession, PaginatedResponse } from "@/types";
 
@@ -13,6 +11,7 @@ export const sessionKeys = {
   all: ["sessions"] as const,
   mine: (page: number, limit: number) => ["sessions", "mine", page, limit] as const,
   org: (page: number, limit: number) => ["sessions", "org", page, limit] as const,
+  orgSegment: (status: string) => ["sessions", "org", "segment", status] as const,
 };
 
 export function useMySessions(page = 1, limit = 50) {
@@ -33,38 +32,69 @@ export function useOrgSessions(page = 1, limit = 50) {
   });
 }
 
-export function useAllOrgSessions() {
-  const query = useInfiniteQuery<
-    PaginatedResponse<AttendanceSession>,
-    Error,
-    AttendanceSession[],
-    ["orgSessionsAll"],
-    number
-  >({
-    queryKey: ["orgSessionsAll"],
-    queryFn: ({ pageParam }) => attendanceApi.orgSessions(pageParam, 100),
-    staleTime: 60_000,
-    placeholderData: keepPreviousData,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      const fetched = allPages.reduce((sum, p) => sum + p.data.length, 0);
-      return fetched < lastPage.pagination.total ? allPages.length + 1 : undefined;
-    },
-    select: (data) => data.pages.flatMap((p) => p.data),
+/**
+ * Segmented sessions loading:
+ * 1. Active sessions load immediately (critical data)
+ * 2. Recent sessions load in background
+ * 3. Inactive sessions load last
+ *
+ * Returns merged data sorted: ACTIVE → RECENT → INACTIVE.
+ */
+export function useSegmentedOrgSessions() {
+  const activeQuery = useQuery<PaginatedResponse<AttendanceSession>>({
+    queryKey: sessionKeys.orgSegment("active"),
+    queryFn: () => attendanceApi.orgSessions(1, 200, "active"),
+    staleTime: 30_000,
   });
 
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
-  useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const recentQuery = useQuery<PaginatedResponse<AttendanceSession>>({
+    queryKey: sessionKeys.orgSegment("recent"),
+    queryFn: () => attendanceApi.orgSessions(1, 200, "recent"),
+    staleTime: 60_000,
+    // Load in background after active loads
+    enabled: !activeQuery.isLoading,
+  });
+
+  const inactiveQuery = useQuery<PaginatedResponse<AttendanceSession>>({
+    queryKey: sessionKeys.orgSegment("inactive"),
+    queryFn: () => attendanceApi.orgSessions(1, 200, "inactive"),
+    staleTime: 60_000,
+    // Load last, after recent loads
+    enabled: !activeQuery.isLoading && !recentQuery.isLoading,
+  });
+
+  const activeSessions = activeQuery.data?.data ?? [];
+  const recentSessions = recentQuery.data?.data ?? [];
+  const inactiveSessions = inactiveQuery.data?.data ?? [];
+
+  // Merge in priority order: ACTIVE → RECENT → INACTIVE
+  const allSessions = [...activeSessions, ...recentSessions, ...inactiveSessions];
 
   return {
-    data: query.data ?? [],
-    isLoading: query.isLoading,
-    error: query.error,
-    refetch: query.refetch,
+    data: allSessions,
+    activeSessions,
+    recentSessions,
+    inactiveSessions,
+    isLoading: activeQuery.isLoading,
+    isLoadingRecent: recentQuery.isLoading,
+    isLoadingInactive: inactiveQuery.isLoading,
+    error: activeQuery.error ?? recentQuery.error ?? inactiveQuery.error,
+    refetch: () => {
+      void activeQuery.refetch();
+      void recentQuery.refetch();
+      void inactiveQuery.refetch();
+    },
+  };
+}
+
+/** @deprecated Use useSegmentedOrgSessions instead */
+export function useAllOrgSessions() {
+  const segmented = useSegmentedOrgSessions();
+  return {
+    data: segmented.data,
+    isLoading: segmented.isLoading,
+    error: segmented.error,
+    refetch: segmented.refetch,
   };
 }
 

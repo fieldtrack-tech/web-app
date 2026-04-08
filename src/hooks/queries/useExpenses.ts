@@ -103,23 +103,13 @@ export function useEmployeePendingExpenses(
     queryFn: async () => {
       if (!summary) return [];
 
-      const matchesEmployee = (expense: { employee_id: string; employee_name?: string | null; employee_code?: string | null }) =>
-        expense.employee_id === summary.employeeId ||
-        expense.employee_name === summary.employeeName ||
-        expense.employee_code === summary.employeeCode;
+      // Fetch PENDING expenses for this specific employee directly
+      const result = await expensesApi.adminExpenses(1, 100, {
+        employeeId: summary.employeeId,
+        status: "PENDING",
+      });
 
-      const matchedExpenses = [] as Awaited<ReturnType<typeof expensesApi.adminExpenses>>["data"];
-      let page = 1;
-      let total = Number.POSITIVE_INFINITY;
-
-      while ((page - 1) * 100 < total && matchedExpenses.length < summary.pendingCount) {
-        const currentPage = await expensesApi.adminExpenses(page, 100);
-        total = currentPage.pagination.total;
-        matchedExpenses.push(...currentPage.data.filter(matchesEmployee));
-        page += 1;
-      }
-
-      return matchedExpenses;
+      return result.data;
     },
     staleTime: 30_000,
   });
