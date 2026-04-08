@@ -67,23 +67,20 @@ export function FleetMap({ fleet = [], className = "h-80 w-full rounded-2xl", on
         const icon = member.status === "ACTIVE"
           ? L.divIcon({
               className: "",
-              html: `<div style="position:relative;width:20px;height:20px;">
-                <div style="
+              html: `<div style="position:relative;width:24px;height:24px;">
+                <div class="marker-live-ring" style="
                   position:absolute;inset:0;
-                  border-radius:50%;
                   background:${color};
-                  opacity:0.25;
-                  transform:scale(1.8);
                 "></div>
                 <div style="
-                  position:absolute;inset:0;
+                  position:absolute;inset:2px;
                   border-radius:50%;
                   background:${color};
-                  border:2.5px solid rgba(255,255,255,0.9);
-                  box-shadow:0 0 12px ${color}bb, 0 0 4px ${color}66;
+                  border:2.5px solid rgba(255,255,255,0.95);
+                  box-shadow:0 0 14px ${color}cc, 0 0 5px ${color}77;
                 "></div>
               </div>`,
-              iconAnchor: [10, 10],
+              iconAnchor: [12, 12],
             })
           : L.divIcon({
               className: "",

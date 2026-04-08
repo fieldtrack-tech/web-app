@@ -61,17 +61,17 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
       )}
 
       {/* Right actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {/* Theme toggle */}
         <ThemeToggle compact />
 
         {/* Bell — display only (no unread notifications) */}
-        <div className="btn-icon cursor-default opacity-60" aria-label="Notifications (coming soon)" title="Notifications coming soon">
+        <div className="btn-icon cursor-default opacity-50" aria-label="Notifications (coming soon)" title="Notifications coming soon">
           <Bell className="w-4 h-4" />
         </div>
 
         {/* Avatar + user info + dropdown */}
-        <div className="relative flex items-center gap-2.5" ref={menuRef}>
+        <div className="relative flex items-center gap-3" ref={menuRef}>
           <button
             className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase hover:ring-2 hover:ring-primary/40 transition-all shrink-0"
             aria-label="User menu"

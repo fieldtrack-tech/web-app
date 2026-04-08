@@ -119,15 +119,11 @@ export default function EmployeeDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 rounded-xl bg-surface-container p-1">
+      <div className="tab-group">
         {TABS.map((tab) => (
           <button
             key={tab}
-            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
-              activeTab === tab
-                ? "bg-primary text-on-primary"
-                : "text-on-surface-variant hover:bg-surface-container-high"
-            }`}
+            className={`tab-btn ${activeTab === tab ? "tab-btn-active" : ""}`}
             onClick={() => setActiveTab(tab)}
           >
             {tab}

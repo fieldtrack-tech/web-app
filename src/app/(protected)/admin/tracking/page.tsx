@@ -90,7 +90,7 @@ export default function LiveTrackingPage() {
           </div>
 
           {/* Employee list */}
-          <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-1">
+          <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
             {isLoading ? (
               <div className="space-y-2 pt-2">
                 {[1, 2, 3].map((i) => (
@@ -103,17 +103,17 @@ export default function LiveTrackingPage() {
               filtered.map((marker) => (
                 <div
                   key={marker.employeeId}
-                  className="p-3 rounded-xl hover:bg-surface-container-high/60 transition-colors space-y-1.5 border border-transparent hover:border-outline-variant/20"
+                  className="px-3 py-3.5 rounded-xl hover:bg-surface-container-high/60 transition-colors border border-transparent hover:border-outline-variant/20"
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <p className="text-sm font-semibold text-on-surface truncate">{marker.employeeName}</p>
                     <StatusBadge status={marker.status === "ACTIVE" ? "ACTIVE" : "CLOSED"} />
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-on-surface-variant">
+                  <div className="flex items-center gap-3 text-xs text-on-surface-variant/70">
                     <span className="truncate">{marker.employeeCode ? `#${marker.employeeCode}` : marker.employeeId.slice(0, 8)}</span>
                     <span className="shrink-0">{timeAgo(marker.recordedAt)}</span>
                   </div>
-                  <p className="text-[10px] text-on-surface-variant/70 font-mono">
+                  <p className="text-[10px] text-on-surface-variant/50 font-mono mt-1">
                     {marker.latitude.toFixed(4)}, {marker.longitude.toFixed(4)}
                   </p>
                 </div>

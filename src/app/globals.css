@@ -93,30 +93,34 @@
 
 /* ── Dark Mode ─────────────────────────────────────────────────────────── */
 .dark {
-  /* Backgrounds — rich navy, NOT pure black */
-  --background:                  232 47% 7%;
-  --surface:                     229 42% 11%;
-  --surface-dim:                 232 47% 7%;
-  --surface-bright:              233 40% 18%;
-  --surface-container-lowest:    232 47% 7%;
-  --surface-container-low:       229 42% 11%;
-  --surface-container:           228 35% 15%;
-  --surface-container-high:      229 36% 19%;
-  --surface-container-highest:   232 37% 25%;
-  --surface-variant:             229 36% 19%;
-  --surface-tint:                241 98% 65%;
+  /* Backgrounds — 3-layer depth system
+     Layer 1 (body/bg):   #0c1220 → 220 48% 8%
+     Layer 2 (sidebar):   #111827 → 220 36% 11%
+     Layer 3 (cards):     #1c2736 → 215 28% 16%
+  */
+  --background:                  220 48% 6%;
+  --surface:                     220 38% 10%;    /* sidebar */
+  --surface-dim:                 220 48% 6%;
+  --surface-bright:              215 26% 22%;
+  --surface-container-lowest:    220 48% 6%;
+  --surface-container-low:       220 35% 12%;
+  --surface-container:           215 28% 16%;    /* cards */
+  --surface-container-high:      215 24% 20%;
+  --surface-container-highest:   215 18% 26%;
+  --surface-variant:             215 24% 20%;
+  --surface-tint:                145 70% 50%;
 
-  /* Primary */
-  --primary:                     241 98% 65%;
-  --primary-container:           241 38% 59%;
-  --on-primary:                  235 100% 97%;
-  --on-primary-container:        0 0% 100%;
+  /* Primary — bright green optimised for dark bg */
+  --primary:                     145 68% 50%;
+  --primary-container:           145 44% 18%;
+  --on-primary:                  145 30% 5%;
+  --on-primary-container:        145 80% 88%;
 
-  /* Secondary */
-  --secondary:                   241 38% 59%;
-  --secondary-container:         241 28% 52%;
-  --on-secondary:                240 100% 97%;
-  --on-secondary-container:      0 0% 100%;
+  /* Secondary — medium green */
+  --secondary:                   145 52% 38%;
+  --secondary-container:         145 36% 16%;
+  --on-secondary:                145 20% 5%;
+  --on-secondary-container:      145 80% 88%;
 
   /* Tertiary */
   --tertiary:                    20 90% 63%;
@@ -150,10 +154,10 @@
   --accent-lime:                 78 80% 62%;
 
   /* Pre-computed full colors for SVG/canvas */
-  --chart-text:                  hsl(237, 14%, 70%);
-  --chart-grid:                  hsl(237, 12%, 27%);
-  --chart-line-primary:          hsl(241, 98%, 75%);
-  --chart-line-secondary:        hsl(150, 52%, 63%);
+  --chart-text:                  hsl(220, 14%, 60%);
+  --chart-grid:                  hsl(215, 18%, 22%);
+  --chart-line-primary:          hsl(145, 68%, 55%);
+  --chart-line-secondary:        hsl(150, 52%, 58%);
 
   /* Accent chart colors (pre-computed full CSS values for SVG stroke/fill) */
   --chart-accent-lime:           hsl(78, 80%, 62%);
@@ -161,14 +165,14 @@
   --chart-accent-purple:         hsl(270, 80%, 68%);
   --chart-accent-yellow:         hsl(45, 95%, 62%);
   --chart-accent-pink:           hsl(330, 80%, 68%);
-  --chart-tooltip-bg:            hsl(228, 35%, 17%);
-  --chart-tooltip-border:        hsl(237, 12%, 30%);
+  --chart-tooltip-bg:            hsl(215, 28%, 18%);
+  --chart-tooltip-border:        hsl(215, 18%, 26%);
 
-  --map-bg:                      hsl(229, 42%, 11%);
-  --map-control-bg:              hsl(229, 36%, 19%);
-  --map-control-border:          hsl(237, 12%, 27%);
-  --map-control-text:            hsl(236, 100%, 97%);
-  --shadow:                      232 47% 2%;
+  --map-bg:                      hsl(220, 38%, 10%);
+  --map-control-bg:              hsl(215, 24%, 18%);
+  --map-control-border:          hsl(215, 18%, 24%);
+  --map-control-text:            hsl(220, 40%, 92%);
+  --shadow:                      220 48% 2%;
 }
 
 /* ─── Base Reset ─────────────────────────────────────────────────────────── */
@@ -199,9 +203,9 @@
 
   .dark body {
     background:
-      radial-gradient(70% 55% at 12% 12%, hsl(var(--primary) / 0.12), transparent 58%),
-      radial-gradient(60% 50% at 88% 0%, hsl(var(--secondary) / 0.08), transparent 62%),
-      linear-gradient(180deg, hsl(232 47% 9%) 0%, hsl(var(--background)) 45%, hsl(232 50% 6%) 100%);
+      radial-gradient(70% 55% at 12% 12%, hsl(145 68% 50% / 0.08), transparent 58%),
+      radial-gradient(60% 50% at 88% 0%, hsl(145 45% 30% / 0.05), transparent 62%),
+      linear-gradient(180deg, hsl(220 45% 7%) 0%, hsl(220 46% 6%) 45%, hsl(220 50% 5%) 100%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -439,8 +443,9 @@
     font-weight: 600;
   }
   .dark .nav-item.active {
-    background: hsl(var(--accent-lime) / 0.15);
-    color: hsl(var(--accent-lime));
+    background: linear-gradient(135deg, hsl(145, 52%, 15%) 0%, hsl(145, 44%, 22%) 100%);
+    color: hsl(145, 75%, 80%);
+    box-shadow: inset 0 0 0 1px hsl(145 58% 40% / 0.20);
   }
   .nav-item.active::before {
     content: none;
@@ -453,17 +458,38 @@
     bottom: 20%;
     width: 3px;
     border-radius: 0 3px 3px 0;
-    background: hsl(var(--accent-lime));
-    box-shadow: 0 0 10px hsl(var(--accent-lime) / 0.6);
+    background: hsl(145, 68%, 52%);
+    box-shadow: 0 0 8px hsl(145 68% 52% / 0.55);
   }
   .nav-item.active svg {
     color: hsl(var(--on-primary));
   }
   .dark .nav-item.active svg {
-    color: hsl(var(--accent-lime));
+    color: hsl(145, 75%, 74%);
   }
-
-  /* ── KPI Card ────────────────────────────────── */
+  /* ── Tab Pill Group ─────────────────────────── */
+  .tab-group {
+    @apply flex flex-wrap items-center gap-0.5 p-1 rounded-xl;
+    background: hsl(var(--surface-container));
+  }
+  .tab-btn {
+    @apply px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 cursor-pointer select-none;
+    color: hsl(var(--on-surface-variant));
+  }
+  .tab-btn:hover:not(.tab-btn-active) {
+    background: hsl(var(--surface-container-high));
+    color: hsl(var(--on-surface));
+  }
+  .tab-btn-active {
+    background: linear-gradient(135deg, hsl(145, 60%, 16%) 0%, hsl(142, 56%, 34%) 100%);
+    color: #fff;
+    font-weight: 600;
+  }
+  .dark .tab-btn-active {
+    background: linear-gradient(135deg, hsl(145, 50%, 18%) 0%, hsl(145, 46%, 28%) 100%);
+    color: hsl(145, 75%, 84%);
+  }
+  /* ── KPI Card ───────────────────────────────── */
   .kpi-card {
     @apply card flex flex-col gap-4;
   }
@@ -551,6 +577,16 @@
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ─── Map Marker Pulse Animation ──────────────────────────────────── */
+@keyframes marker-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.3; }
+  50%       { transform: scale(2.0); opacity: 0.04; }
+}
+.marker-live-ring {
+  border-radius: 50%;
+  animation: marker-pulse 2.8s ease-in-out infinite;
 }
 
 /* ─── Leaflet Map Overrides ──────────────────────────────────────────────── */

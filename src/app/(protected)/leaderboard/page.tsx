@@ -30,12 +30,12 @@ export default function LeaderboardPage() {
         <p className="text-sm text-on-surface-variant">Rankings across your organisation.</p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="tab-group">
         {METRICS.map((m) => (
           <button
             key={m}
             onClick={() => setMetric(m)}
-            className={`btn-secondary h-8 px-3 text-xs capitalize ${metric === m ? "bg-primary/20 text-primary" : ""}`}
+            className={`tab-btn capitalize ${metric === m ? "tab-btn-active" : ""}`}
           >
             {m}
           </button>
