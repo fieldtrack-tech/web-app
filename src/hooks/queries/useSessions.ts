@@ -43,13 +43,13 @@ export function useOrgSessions(page = 1, limit = 50) {
 export function useSegmentedOrgSessions() {
   const activeQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("active"),
-    queryFn: () => attendanceApi.orgSessions(1, 200, "active"),
+    queryFn: () => attendanceApi.orgSessions(1, 100, "active"),
     staleTime: 30_000,
   });
 
   const recentQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("recent"),
-    queryFn: () => attendanceApi.orgSessions(1, 200, "recent"),
+    queryFn: () => attendanceApi.orgSessions(1, 100, "recent"),
     staleTime: 60_000,
     // Load in background after active loads
     enabled: !activeQuery.isLoading,
@@ -57,7 +57,7 @@ export function useSegmentedOrgSessions() {
 
   const inactiveQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("inactive"),
-    queryFn: () => attendanceApi.orgSessions(1, 200, "inactive"),
+    queryFn: () => attendanceApi.orgSessions(1, 100, "inactive"),
     staleTime: 60_000,
     // Load last, after recent loads
     enabled: !activeQuery.isLoading && !recentQuery.isLoading,

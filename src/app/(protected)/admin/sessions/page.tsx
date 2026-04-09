@@ -76,9 +76,10 @@ export default function AdminSessionsPage() {
           <button
             key={k}
             onClick={() => setTab(k as FilterTab)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium ${tab === k ? "bg-surface-container text-on-surface" : "text-on-surface-variant"}`}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === k ? "text-white" : "text-on-surface-variant hover:text-on-surface"}`}
+            style={tab === k ? { background: "linear-gradient(135deg, hsl(145, 60%, 16%) 0%, hsl(142, 56%, 34%) 100%)" } : undefined}
           >
-            {k}
+            {k.toUpperCase()}
             {k === "RECENT" && isLoadingRecent ? " …" : ""}
             {k === "INACTIVE" && isLoadingInactive ? " …" : ""}
           </button>
