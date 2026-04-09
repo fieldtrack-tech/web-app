@@ -62,7 +62,7 @@ export function useEmployeeOrgExpenses(employeeId: string | null, page = 1, limi
 export function useAllAdminPendingExpenses() {
   const query = useInfiniteQuery({
     queryKey: ["expenses", "admin", "all-pending"],
-    queryFn: ({ pageParam }: { pageParam: number }) => expensesApi.adminExpenses(pageParam, 100),
+    queryFn: ({ pageParam }: { pageParam: number }) => expensesApi.adminExpenses(pageParam, 50),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const fetched = allPages.reduce((sum, currentPage) => sum + currentPage.data.length, 0);
@@ -166,6 +166,10 @@ export function useReviewExpense() {
         }
       }
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: expenseKeys.all }),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: expenseKeys.all });
+      // Dashboard shows pending expense count — refresh after review
+      void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+    },
   });
 }

@@ -35,32 +35,33 @@ export function useOrgSessions(page = 1, limit = 50) {
 /**
  * Segmented sessions loading:
  * 1. Active sessions load immediately (critical data)
- * 2. Recent sessions load in background
- * 3. Inactive sessions load last
+ * 2. Recent + Inactive sessions load in PARALLEL after active completes
  *
  * Returns merged data sorted: ACTIVE → RECENT → INACTIVE.
  */
 export function useSegmentedOrgSessions() {
   const activeQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("active"),
-    queryFn: () => attendanceApi.orgSessions(1, 100, "active"),
+    queryFn: () => attendanceApi.orgSessions(1, 200, "active"),
     staleTime: 30_000,
   });
 
+  // Recent + Inactive load in PARALLEL once active is done (not sequentially)
+  const activeLoaded = !activeQuery.isLoading;
+
   const recentQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("recent"),
-    queryFn: () => attendanceApi.orgSessions(1, 100, "recent"),
+    queryFn: () => attendanceApi.orgSessions(1, 200, "recent"),
     staleTime: 60_000,
-    // Load in background after active loads
-    enabled: !activeQuery.isLoading,
+    enabled: activeLoaded,
   });
 
   const inactiveQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("inactive"),
-    queryFn: () => attendanceApi.orgSessions(1, 100, "inactive"),
+    queryFn: () => attendanceApi.orgSessions(1, 200, "inactive"),
     staleTime: 60_000,
-    // Load last, after recent loads
-    enabled: !activeQuery.isLoading && !recentQuery.isLoading,
+    // Load in parallel with recent — both enabled once active completes
+    enabled: activeLoaded,
   });
 
   const activeSessions = activeQuery.data?.data ?? [];
@@ -130,10 +131,52 @@ export function useCheckIn() {
   return useMutation({
     mutationFn: attendanceApi.checkIn,
     onMutate: async () => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
       await qc.cancelQueries({ queryKey: sessionKeys.all });
+
+      // Snapshot for rollback
+      const previousQueries = qc.getQueriesData({ queryKey: sessionKeys.all });
+
+      // Optimistically add a placeholder active session to "my sessions"
+      const now = new Date().toISOString();
+      const optimisticSession: AttendanceSession = {
+        id: `optimistic-${Date.now()}`,
+        employee_id: "",
+        organization_id: "",
+        checkin_at: now,
+        checkout_at: null,
+        total_distance_km: null,
+        total_duration_seconds: null,
+        distance_recalculation_status: null,
+        created_at: now,
+        updated_at: now,
+        activityStatus: "ACTIVE",
+      };
+
+      qc.setQueriesData(
+        { queryKey: ["sessions", "mine"] },
+        (old: unknown) => {
+          if (!old || typeof old !== "object") return old;
+          const page = old as { data?: AttendanceSession[] };
+          if (!Array.isArray(page.data)) return old;
+          return { ...page, data: [optimisticSession, ...page.data] };
+        },
+      );
+
+      return { previousQueries };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
-    onError: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
+    onError: (_err, _vars, context) => {
+      // Revert on failure
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          qc.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: sessionKeys.all });
+      void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+    },
   });
 }
 
@@ -142,9 +185,45 @@ export function useCheckOut() {
   return useMutation({
     mutationFn: attendanceApi.checkOut,
     onMutate: async () => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
       await qc.cancelQueries({ queryKey: sessionKeys.all });
+
+      // Snapshot for rollback
+      const previousQueries = qc.getQueriesData({ queryKey: sessionKeys.all });
+
+      // Optimistically mark the active session as checked out
+      const now = new Date().toISOString();
+      qc.setQueriesData(
+        { queryKey: ["sessions", "mine"] },
+        (old: unknown) => {
+          if (!old || typeof old !== "object") return old;
+          const page = old as { data?: AttendanceSession[] };
+          if (!Array.isArray(page.data)) return old;
+          return {
+            ...page,
+            data: page.data.map((s) =>
+              !s.checkout_at
+                ? { ...s, checkout_at: now, activityStatus: "RECENT" as const }
+                : s,
+            ),
+          };
+        },
+      );
+
+      return { previousQueries };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
+    onError: (_err, _vars, context) => {
+      // Revert on failure
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          qc.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: sessionKeys.all });
+      void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+    },
     onError: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }

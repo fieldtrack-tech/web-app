@@ -101,7 +101,7 @@ export function EmployeeTable() {
                 <th>Employee</th>
                 <th>Code</th>
                 <th>Phone</th>
-                <th>Employment</th>
+                <th>Account Status</th>
                 <th>Activity</th>
                 <th>Last Activity</th>
                 <th>Joined</th>

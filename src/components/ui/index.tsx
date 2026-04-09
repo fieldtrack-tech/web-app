@@ -12,6 +12,8 @@ interface StatusBadgeProps {
 const STATUS_MAP: Record<string, string> = {
   APPROVED: "badge-success",
   ACTIVE:   "badge-success",
+  RECENT:   "badge-pending",
+  INACTIVE: "badge-neutral",
   CLOSED:   "badge-neutral",
   PENDING:  "badge-pending",
   REJECTED: "badge-error",

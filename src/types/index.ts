@@ -301,6 +301,11 @@ export interface AdminDashboardData {
   pendingExpenseAmount: number;
   sessionTrend: SessionTrendEntry[];
   leaderboard: LeaderboardEntry[];
+  /**
+   * ISO-8601 timestamp of the org_dashboard_snapshot's last update.
+   * Display as "Last updated X seconds ago" to signal eventual consistency.
+   */
+  snapshotUpdatedAt: string | null;
 }
 
 export interface EmployeeMapMarker {

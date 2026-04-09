@@ -23,7 +23,7 @@ export const attendanceApi = {
   allOrgSessions: () =>
     apiGetPaginated<AttendanceSession>(API.adminSessions, {
       page: "1",
-      limit: "100",
+      limit: "50",
     }),
 
   recalculate: (sessionId: string) =>
@@ -35,13 +35,13 @@ export const attendanceApi = {
     apiGetPaginated<AttendanceSession>(API.adminSessions, {
       employee_id: employeeId,
       page: "1",
-      limit: "100",
+      limit: "50",
     }),
 
   byIdFallback: async (id: string): Promise<AttendanceSession | undefined> => {
     const page = await apiGetPaginated<AttendanceSession>(API.sessions, {
       page: "1",
-      limit: "100",
+      limit: "50",
     });
     return page.data.find((s) => s.id === id);
   },

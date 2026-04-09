@@ -1,0 +1,101 @@
+name: Web App PR Validation
+
+on:
+  pull_request:
+    branches:
+      - master
+
+# Cancel stale runs for the same PR when new commits are pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+
+  detect-changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'src/**'
+              - 'public/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+              - 'next.config.mjs'
+              - 'tailwind.config.ts'
+              - '.github/workflows/**'
+
+  web-ci:
+    name: Web App CI
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    timeout-minutes: 15
+    if: always()
+    env:
+      # Next.js requires these at build time even in CI (can be dummy values)
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+      NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001' }}
+      # Disable Next.js telemetry in CI
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Abort if change detection failed
+        if: needs.detect-changes.result != 'success'
+        run: |
+          echo "❌ Change detection did not succeed (result: ${{ needs.detect-changes.result }}) — cannot safely skip checks"
+          exit 1
+
+      - name: Skip if no web changes
+        if: needs.detect-changes.outputs.web != 'true'
+        run: |
+          echo "No web-app changes — skipping all web validation"
+          echo "✓ Web CI (skipped)"
+          exit 0
+
+      - uses: actions/checkout@v5
+        if: needs.detect-changes.outputs.web == 'true'
+
+      - uses: actions/setup-node@v5
+        if: needs.detect-changes.outputs.web == 'true'
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        if: needs.detect-changes.outputs.web == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: needs.detect-changes.outputs.web == 'true'
+        run: npm run lint
+
+      - name: Type check
+        if: needs.detect-changes.outputs.web == 'true'
+        run: npm run type-check
+
+      - name: Build
+        if: needs.detect-changes.outputs.web == 'true'
+        run: npm run build
+
+      - name: Verify build output
+        if: needs.detect-changes.outputs.web == 'true'
+        run: |
+          if [ ! -d ".next" ]; then
+            echo "❌ Build output directory .next not found"
+            exit 1
+          fi
+          echo "✓ Build succeeded — .next directory present"
