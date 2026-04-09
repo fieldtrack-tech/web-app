@@ -32,7 +32,7 @@ export function TopBar({ orgName, onMenuClick }: TopBarProps) {
   }, [menuOpen]);
 
   return (
-    <header className="flex items-center justify-between h-16 px-4 md:px-6 bg-transparent">
+    <header className="relative z-[600] flex items-center justify-between h-16 px-4 md:px-6 bg-transparent">
       {/* Left: hamburger (mobile) */}
       <div className="flex items-center gap-2">
         {/* Hamburger — only visible on mobile */}
