@@ -68,12 +68,3 @@ export function useCreateEmployee() {
     onSuccess: () => void client.invalidateQueries({ queryKey: employeeKeys.all }),
   });
 }
-
-export function useSetEmployeeStatus() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
-      adminApi.setEmployeeStatus(id, is_active),
-    onSuccess: () => void client.invalidateQueries({ queryKey: employeeKeys.all }),
-  });
-}

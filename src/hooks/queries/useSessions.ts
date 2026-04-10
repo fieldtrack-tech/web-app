@@ -88,17 +88,6 @@ export function useSegmentedOrgSessions() {
   };
 }
 
-/** @deprecated Use useSegmentedOrgSessions instead */
-export function useAllOrgSessions() {
-  const segmented = useSegmentedOrgSessions();
-  return {
-    data: segmented.data,
-    isLoading: segmented.isLoading,
-    error: segmented.error,
-    refetch: segmented.refetch,
-  };
-}
-
 export function useEmployeeSessionHistory(employeeId: string | null) {
   return useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: ["orgSessionsEmployee", employeeId],
@@ -176,6 +165,7 @@ export function useCheckIn() {
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: sessionKeys.all });
       void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+      void qc.invalidateQueries({ queryKey: ["employees"] });
     },
   });
 }
@@ -223,7 +213,7 @@ export function useCheckOut() {
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: sessionKeys.all });
       void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+      void qc.invalidateQueries({ queryKey: ["employees"] });
     },
-    onError: () => qc.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }

@@ -4,16 +4,22 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminSSE } from "@/hooks/useAdminSSE";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { EmployeeSidebar } from "@/components/layout/EmployeeSidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { Spinner } from "@/components/ui";
+import { SnapshotHealthBanner } from "@/components/admin/SnapshotHealthBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const { isLoading, role, user } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isAdmin = !isLoading && !!user && role === "ADMIN";
+
+  // Real-time SSE: invalidate React Query caches on server-sent events (admin only)
+  useAdminSSE({ enabled: isAdmin });
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -36,8 +42,6 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
   if (!user) return null;
 
-  const isAdmin = role === "ADMIN";
-
   return (
     <div className="flex h-screen overflow-hidden bg-background md:pr-3 md:pb-3 md:pt-3">
       {/* Mobile overlay backdrop */}
@@ -59,6 +63,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden md:rounded-2xl md:bg-background">
         <TopBar onMenuClick={() => setSidebarOpen((v) => !v)} />
+        {isAdmin && <SnapshotHealthBanner />}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>

@@ -8,7 +8,6 @@ import { ActivityTrendChart } from "@/components/charts/ActivityTrendChart";
 import { DistanceChart } from "@/components/charts/DistanceChart";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { PageHeader } from "@/components/ui";
-import { SnapshotHealthBanner } from "@/components/admin/SnapshotHealthBanner";
 import dynamic from "next/dynamic";
 import { useAdminMap } from "@/hooks/queries/useDashboard";
 
@@ -52,9 +51,6 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle="Organisation overview" />
-
-      {/* Snapshot health warning — only visible when data is stale */}
-      <SnapshotHealthBanner />
 
       {/* KPI row — first card highlighted green, rest neutral */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

@@ -1,11 +1,9 @@
 import {
   keepPreviousData,
-  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { expensesApi } from "@/lib/api/expenses";
 import type { ExpenseStatus } from "@/types";
 
@@ -22,15 +20,6 @@ export function useMyExpenses(page = 1, limit = 50) {
   return useQuery({
     queryKey: expenseKeys.mine(page, limit),
     queryFn: () => expensesApi.myExpenses(page, limit),
-    placeholderData: keepPreviousData,
-    staleTime: 30_000,
-  });
-}
-
-export function useAdminExpenses(page = 1, limit = 50) {
-  return useQuery({
-    queryKey: expenseKeys.admin(page, limit),
-    queryFn: () => expensesApi.adminExpenses(page, limit),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
@@ -57,34 +46,6 @@ export function useEmployeeOrgExpenses(employeeId: string | null, page = 1, limi
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
-}
-
-export function useAllAdminPendingExpenses() {
-  const query = useInfiniteQuery({
-    queryKey: ["expenses", "admin", "all-pending"],
-    queryFn: ({ pageParam }: { pageParam: number }) => expensesApi.adminExpenses(pageParam, 50),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      const fetched = allPages.reduce((sum, currentPage) => sum + currentPage.data.length, 0);
-      return fetched < lastPage.pagination.total ? allPages.length + 1 : undefined;
-    },
-    select: (data) => data.pages.flatMap((page) => page.data),
-    staleTime: 30_000,
-  });
-
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
-  useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  return {
-    data: query.data ?? [],
-    isLoading: query.isLoading,
-    error: query.error,
-    refetch: query.refetch,
-  };
 }
 
 export function useEmployeePendingExpenses(

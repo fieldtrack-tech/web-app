@@ -53,6 +53,7 @@ export function useAdminSSE({ enabled = true }: { enabled?: boolean } = {}) {
           case "session.checkin":
           case "session.checkout":
             void qc.invalidateQueries({ queryKey: ["sessions"] });
+            void qc.invalidateQueries({ queryKey: ["employees"] });
             void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
             void qc.invalidateQueries({ queryKey: ["adminMap"] });
             break;
