@@ -12,6 +12,8 @@ export const sessionKeys = {
   mine: (page: number, limit: number) => ["sessions", "mine", page, limit] as const,
   org: (page: number, limit: number) => ["sessions", "org", page, limit] as const,
   orgSegment: (status: string) => ["sessions", "org", "segment", status] as const,
+  detail: (id: string) => ["sessions", "detail", id] as const,
+  employeeHistory: (employeeId: string) => ["sessions", "employee", employeeId] as const,
 };
 
 export function useMySessions(page = 1, limit = 50) {
@@ -39,10 +41,15 @@ export function useOrgSessions(page = 1, limit = 50) {
  *
  * Returns merged data sorted: ACTIVE → RECENT → INACTIVE.
  */
+// Backend enforces limit ≤ 100 (attendance.schema.ts + admin/sessions.routes.ts).
+// Segment queries fetch the first page of each status; large orgs will need
+// pagination on the sessions page in a future iteration.
+const SEGMENT_PAGE_LIMIT = 100;
+
 export function useSegmentedOrgSessions() {
   const activeQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("active"),
-    queryFn: () => attendanceApi.orgSessions(1, 200, "active"),
+    queryFn: () => attendanceApi.orgSessions(1, SEGMENT_PAGE_LIMIT, "active"),
     staleTime: 30_000,
   });
 
@@ -51,14 +58,14 @@ export function useSegmentedOrgSessions() {
 
   const recentQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("recent"),
-    queryFn: () => attendanceApi.orgSessions(1, 200, "recent"),
+    queryFn: () => attendanceApi.orgSessions(1, SEGMENT_PAGE_LIMIT, "recent"),
     staleTime: 60_000,
     enabled: activeLoaded,
   });
 
   const inactiveQuery = useQuery<PaginatedResponse<AttendanceSession>>({
     queryKey: sessionKeys.orgSegment("inactive"),
-    queryFn: () => attendanceApi.orgSessions(1, 200, "inactive"),
+    queryFn: () => attendanceApi.orgSessions(1, SEGMENT_PAGE_LIMIT, "inactive"),
     staleTime: 60_000,
     // Load in parallel with recent — both enabled once active completes
     enabled: activeLoaded,
@@ -90,7 +97,7 @@ export function useSegmentedOrgSessions() {
 
 export function useEmployeeSessionHistory(employeeId: string | null) {
   return useQuery<PaginatedResponse<AttendanceSession>>({
-    queryKey: ["orgSessionsEmployee", employeeId],
+    queryKey: sessionKeys.employeeHistory(employeeId!),
     queryFn: () => attendanceApi.employeeHistory(employeeId!),
     enabled: !!employeeId,
     staleTime: 30_000,
@@ -100,7 +107,7 @@ export function useEmployeeSessionHistory(employeeId: string | null) {
 export function useMySession(id: string) {
   const queryClient = useQueryClient();
   return useQuery<AttendanceSession | undefined>({
-    queryKey: ["session", id],
+    queryKey: sessionKeys.detail(id),
     queryFn: async () => {
       const allPages = queryClient.getQueriesData<PaginatedResponse<AttendanceSession>>({
         queryKey: ["sessions"],

@@ -14,6 +14,8 @@ export const expenseKeys = {
   summary: (page: number, limit: number) => ["expenses", "summary", page, limit] as const,
   employee: (employeeId: string, page: number, limit: number) =>
     ["expenses", "employee", employeeId, page, limit] as const,
+  employeePending: (employeeId: string) =>
+    ["expenses", "employee-pending", employeeId] as const,
 };
 
 export function useMyExpenses(page = 1, limit = 50) {
@@ -60,7 +62,7 @@ export function useEmployeePendingExpenses(
 ) {
   return useQuery({
     enabled: !!summary,
-    queryKey: ["expenses", "employee-pending", summary?.employeeId, summary?.pendingCount],
+    queryKey: expenseKeys.employeePending(summary?.employeeId ?? ""),
     queryFn: async () => {
       if (!summary) return [];
 
