@@ -206,6 +206,25 @@ export interface AuditLog {
   created_at: string;
 }
 
+export type ApiKeyScope = "read:employees" | "read:sessions" | "write:expenses" | "admin:all";
+
+export interface ApiKeyRecord {
+  id: string;
+  name: string;
+  scopes: ApiKeyScope[];
+  created_at: string;
+  last_used_at: string | null;
+  active: boolean;
+  request_count: number;
+  error_count: number;
+  key_preview: string;
+}
+
+export interface CreatedApiKey {
+  key: string;
+  record: ApiKeyRecord;
+}
+
 // ─── Analytics ────────────────────────────────────────────────────────────
 export interface OrgSummaryData {
   totalSessions: number;

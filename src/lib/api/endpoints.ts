@@ -71,6 +71,8 @@ export const API = {
   forceCheckout: "/admin/force-checkout",
   systemHealth: "/admin/system-health",
   retryIntents: "/admin/retry-intents",
+  apiKeys: "/admin/api-keys",
+  apiKeyById: (id: string) => `/admin/api-keys/${id}`,
 
   // Other
   auditLogs: "/admin/audit-log",

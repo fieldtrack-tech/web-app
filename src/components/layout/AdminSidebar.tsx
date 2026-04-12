@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   Receipt,
   BarChart3,
+  KeyRound,
   LogOut,
   X,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { label: "Attendance",    href: "/admin/attendance",  icon: CalendarCheck },
   { label: "Expenses",      href: "/admin/expenses",    icon: Receipt },
   { label: "Analytics",     href: "/admin/analytics",   icon: BarChart3 },
+  { label: "API Keys",      href: "/admin/api-keys",    icon: KeyRound },
 ];
 
 interface AdminSidebarProps {
