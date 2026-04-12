@@ -17,8 +17,7 @@ export const API = {
   expenseStatus: (id: string) => `/admin/expenses/${id}`,
   createExpense: "/expenses",
   expensesSummary: "/admin/expenses/summary",
-  // Note: /admin/expenses/export is intentionally excluded from the standalone frontend
-  // contract — no active caller remains in source flows.
+  receiptUploadUrl: "/expenses/receipt-upload-url",
 
   // Analytics
   orgSummary: "/admin/org-summary",
@@ -62,7 +61,14 @@ export const API = {
   webhookDeliveries: "/admin/webhook-deliveries",
   retryDelivery: (id: string) => `/admin/webhook-deliveries/${id}/retry`,
 
-  // Other
-  auditLogs: "/admin/audit-logs",
+  // Exports
+  expensesExport: "/admin/expenses/export",
+
+  // Admin operations
   forceCheckout: "/admin/force-checkout",
+  systemHealth: "/admin/system-health",
+  retryIntents: "/admin/retry-intents",
+
+  // Other
+  auditLogs: "/admin/audit-log",
 } as const;

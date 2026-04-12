@@ -199,12 +199,11 @@ export interface AuditLog {
   id: string;
   organization_id: string;
   actor_id: string | null;
-  action: string;
+  event: string;
   resource_type: string;
   resource_id: string | null;
-  metadata: Record<string, unknown> | null;
+  payload: Record<string, unknown> | null;
   created_at: string;
-  actor_name?: string | null;
 }
 
 // ─── Analytics ────────────────────────────────────────────────────────────

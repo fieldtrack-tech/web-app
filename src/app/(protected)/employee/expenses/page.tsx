@@ -1,27 +1,55 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import { useMyExpenses, useSubmitExpense } from "@/hooks/queries/useExpenses";
+import { expensesApi } from "@/lib/api/expenses";
 import { PageHeader, LoadingState, EmptyState, StatusBadge, Pagination, Spinner } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { PlusCircle, X } from "lucide-react";
+import { PlusCircle, X, Paperclip } from "lucide-react";
 
-function receiptExtension(url: string): string {
-  try {
-    const pathname = new URL(url).pathname;
-    const ext = pathname.split(".").pop()?.toLowerCase();
-    return ext && ext.length <= 5 ? ext : "jpg";
-  } catch {
-    return "jpg";
+type AllowedExtension = "jpg" | "jpeg" | "png" | "webp" | "pdf";
+
+const ALLOWED_MIME_TYPES: ReadonlySet<string> = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]);
+
+const MAX_RECEIPT_BYTES = 5 * 1024 * 1024; // 5 MB
+
+function getExtension(file: File): AllowedExtension {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "webp" || ext === "pdf") {
+    return ext;
   }
+  // Fall back to MIME type
+  if (file.type === "application/pdf") return "pdf";
+  if (file.type === "image/webp") return "webp";
+  if (file.type === "image/png") return "png";
+  if (file.type === "image/jpeg") return "jpg";
+  // Unknown type — caller must have validated MIME first
+  return "jpg";
+}
+
+function validateReceiptFile(file: File): string | null {
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+    return `Unsupported file type "${file.type}". Please upload a JPG, PNG, WebP, or PDF.`;
+  }
+  if (file.size > MAX_RECEIPT_BYTES) {
+    return `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed size is 5 MB.`;
+  }
+  return null;
 }
 
 function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
   const submit = useSubmitExpense();
   const [amount,      setAmount]      = useState("");
   const [description, setDescription] = useState("");
-  const [receiptUrl,  setReceiptUrl]  = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [uploading,   setUploading]   = useState(false);
   const [error,       setError]       = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -32,19 +60,46 @@ function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
       return;
     }
     try {
+      let receipt_url: string | undefined;
+      let extension: AllowedExtension | undefined;
+
+      if (receiptFile) {
+        const validationError = validateReceiptFile(receiptFile);
+        if (validationError) {
+          setError(validationError);
+          return;
+        }
+        setUploading(true);
+        extension = getExtension(receiptFile);
+        const { uploadUrl, receiptUrl } = await expensesApi.getReceiptUploadUrl(
+          extension,
+          receiptFile.type || undefined,
+        );
+        const uploadRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": receiptFile.type || "application/octet-stream" },
+          body: receiptFile,
+        });
+        if (!uploadRes.ok) {
+          throw new Error(`Receipt upload failed (HTTP ${uploadRes.status}).`);
+        }
+        receipt_url = receiptUrl;
+        setUploading(false);
+      }
+
       await submit.mutateAsync({
         amount: amt,
         description: description.trim(),
-        ...(receiptUrl.trim() ? {
-          receipt_url: receiptUrl.trim(),
-          extension: receiptExtension(receiptUrl.trim()),
-        } : {}),
+        ...(receipt_url ? { receipt_url, extension } : {}),
       });
       onClose();
     } catch (err: unknown) {
+      setUploading(false);
       setError(err instanceof Error ? err.message : "Submission failed.");
     }
   }
+
+  const isPending = submit.isPending || uploading;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
@@ -89,15 +144,47 @@ function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
 
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-on-surface-variant uppercase tracking-wider">
-              Receipt URL <span className="normal-case opacity-60">(optional)</span>
+              Receipt <span className="normal-case opacity-60">(optional)</span>
             </label>
             <input
-              type="url"
-              className="input w-full"
-              placeholder="https://…"
-              value={receiptUrl}
-              onChange={(e) => setReceiptUrl(e.target.value)}
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                if (file) {
+                  const err = validateReceiptFile(file);
+                  if (err) {
+                    setError(err);
+                    e.target.value = "";
+                    return;
+                  }
+                }
+                setError(null);
+                setReceiptFile(file);
+              }}
             />
+            <button
+              type="button"
+              className="btn-secondary w-full flex items-center gap-2 justify-center"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="w-4 h-4" />
+              {receiptFile ? receiptFile.name : "Attach receipt…"}
+            </button>
+            {receiptFile && (
+              <button
+                type="button"
+                className="text-xs text-on-surface-variant underline"
+                onClick={() => {
+                  setReceiptFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+              >
+                Remove
+              </button>
+            )}
           </div>
 
           {error && (
@@ -107,10 +194,10 @@ function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
           <button
             type="submit"
             className="btn-primary w-full"
-            disabled={submit.isPending || !amount || !description}
+            disabled={isPending || !amount || !description}
           >
-            {submit.isPending ? <Spinner size="sm" /> : null}
-            Submit Expense
+            {isPending ? <Spinner size="sm" /> : null}
+            {uploading ? "Uploading receipt…" : "Submit Expense"}
           </button>
         </form>
       </div>

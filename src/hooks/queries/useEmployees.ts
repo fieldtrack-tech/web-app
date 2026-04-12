@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api/admin";
-import type { EmployeeProfileDetail, SearchResults } from "@/types";
+import type { AuditLog, EmployeeProfileDetail, SearchResults } from "@/types";
 
 export const employeeKeys = {
   all: ["employees"] as const,
@@ -9,7 +9,8 @@ export const employeeKeys = {
   detail: (id: string) => ["employees", "detail", id] as const,
   profile: (id: string) => ["employees", "profile", id] as const,
   search: (q: string) => ["search", q] as const,
-  auditLogs: (page: number, limit: number) => ["audit-logs", page, limit] as const,
+  auditLogs: (limit: number, before?: string) =>
+    ["audit-logs", limit, before ?? null] as const,
 };
 
 export function useEmployees(page = 1, limit = 50, search?: string, segment?: string) {
@@ -48,10 +49,10 @@ export function useSearch(q: string) {
   });
 }
 
-export function useAuditLogs(page = 1, limit = 50) {
-  return useQuery({
-    queryKey: employeeKeys.auditLogs(page, limit),
-    queryFn: () => adminApi.auditLogs(page, limit),
+export function useAuditLogs(limit = 50, before?: string) {
+  return useQuery<AuditLog[]>({
+    queryKey: employeeKeys.auditLogs(limit, before),
+    queryFn: () => adminApi.auditLogs(limit, before),
     staleTime: 15_000,
   });
 }

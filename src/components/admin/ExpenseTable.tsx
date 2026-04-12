@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Search, X } from "lucide-react";
+import { Check, Search, X, Download } from "lucide-react";
 import {
   useEmployeePendingExpenses,
   useExpenseSummaryByEmployee,
@@ -16,11 +16,15 @@ import {
 } from "@/components/ui";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { API } from "@/lib/api/endpoints";
+import { env } from "@/lib/env";
 
 export function ExpenseTable() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const LIMIT = 50;
 
   const { data, isLoading } = useExpenseSummaryByEmployee(page, LIMIT);
@@ -42,6 +46,25 @@ export function ExpenseTable() {
   );
   const sortedSelectedExpenses = selectedExpenses
     .sort((left, right) => Number(right.status === "PENDING") - Number(left.status === "PENDING"));
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? "";
+      const url = `${env.API_BASE_URL}${API.expensesExport}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+      const blob = await res.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `expenses-${new Date().toISOString().substring(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const filtered = summaries.filter((summary) =>
     !search ||
@@ -67,6 +90,14 @@ export function ExpenseTable() {
         <div className="text-xs text-on-surface-variant">
           {filtered.filter((summary) => summary.pendingCount > 0).length} employees require action
         </div>
+        <button
+          onClick={() => void handleExport()}
+          disabled={exporting}
+          className="btn-secondary h-9 px-3 text-xs flex items-center gap-1.5 ml-auto"
+        >
+          <Download className="w-3.5 h-3.5" />
+          {exporting ? "Exporting…" : "Export CSV"}
+        </button>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">

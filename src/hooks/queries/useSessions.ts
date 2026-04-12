@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { attendanceApi } from "@/lib/api/attendance";
+import { adminApi } from "@/lib/api/admin";
 import type { AttendanceSession, PaginatedResponse } from "@/types";
 
 export const sessionKeys = {
@@ -217,6 +218,18 @@ export function useCheckOut() {
         }
       }
     },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: sessionKeys.all });
+      void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+      void qc.invalidateQueries({ queryKey: ["employees"] });
+    },
+  });
+}
+
+export function useForceCheckout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (employeeId: string) => adminApi.forceCheckout(employeeId),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: sessionKeys.all });
       void qc.invalidateQueries({ queryKey: ["adminDashboard"] });

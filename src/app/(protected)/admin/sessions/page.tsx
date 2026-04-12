@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSegmentedOrgSessions } from "@/hooks/queries/useSessions";
+import { useSegmentedOrgSessions, useForceCheckout } from "@/hooks/queries/useSessions";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
@@ -23,6 +23,7 @@ function deriveStatus(session: AttendanceSession): ActivityStatus {
 export default function AdminSessionsPage() {
   const { permissions } = useAuth();
   const [tab, setTab] = useState<FilterTab>("all");
+  const forceCheckoutMutation = useForceCheckout();
 
   const {
     data: sessions,
@@ -106,6 +107,7 @@ export default function AdminSessionsPage() {
                 <th>Duration</th>
                 <th>Status</th>
                 <th>Map</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -125,6 +127,22 @@ export default function AdminSessionsPage() {
                     <Link href={`/admin/sessions/${row.latest.id}/locations`} className="btn-icon w-7 h-7 rounded-lg">
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
+                  </td>
+                  <td>
+                    {row.status === "ACTIVE" && (
+                      <button
+                        onClick={() => {
+                          if (confirm(`Force checkout ${row.latest.employee_name ?? row.employeeId}?`)) {
+                            forceCheckoutMutation.mutate(row.employeeId);
+                          }
+                        }}
+                        disabled={forceCheckoutMutation.isPending}
+                        className="btn-icon w-7 h-7 rounded-lg text-error hover:bg-error/10"
+                        title="Force checkout"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -4,6 +4,8 @@ import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { env } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
+import type { AttendanceSession, PaginatedResponse } from "@/types";
+import { sessionKeys } from "@/hooks/queries/useSessions";
 
 type SseEventType =
   | "session.checkin"
@@ -50,16 +52,48 @@ export function useAdminSSE({ enabled = true }: { enabled?: boolean } = {}) {
         const data = JSON.parse(event.data) as SseEvent;
 
         switch (data.type) {
-          case "session.checkin":
-          case "session.checkout":
-            void qc.invalidateQueries({ queryKey: ["sessions"] });
-            void qc.invalidateQueries({ queryKey: ["employees"] });
+          case "session.checkin": {
+            // Optimistic prepend: if the SSE payload carries the full session, push
+            // it into the first page of org sessions cache so the UI updates without
+            // waiting for the next refetch.  Still invalidate so sort order / counts
+            // self-correct from the server.
+            const ciPayload = data.payload as { sessionId?: string; employeeId?: string; session?: AttendanceSession };
+            if (ciPayload.session) {
+              qc.setQueriesData<PaginatedResponse<AttendanceSession>>(
+                { queryKey: sessionKeys.orgSegment("active") },
+                (old) => old
+                  ? { ...old, data: [ciPayload.session!, ...old.data.filter((s) => s.id !== ciPayload.session!.id)] }
+                  : old,
+              );
+            }
+            void qc.invalidateQueries({ queryKey: sessionKeys.all });
             void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
             void qc.invalidateQueries({ queryKey: ["adminMap"] });
             break;
+          }
+          case "session.checkout": {
+            // Optimistic patch: update checkout_at on the session across all cached
+            // session pages so the UI flips from ACTIVE to CLOSED immediately.
+            // Still invalidate so segment lists (active/recent/inactive) re-sort.
+            const coPayload = data.payload as { sessionId?: string; employeeId?: string; session?: AttendanceSession };
+            if (coPayload.sessionId && coPayload.session) {
+              qc.setQueriesData<PaginatedResponse<AttendanceSession>>(
+                { queryKey: sessionKeys.all },
+                (old) => old
+                  ? { ...old, data: old.data.map((s) => s.id === coPayload.sessionId ? { ...s, ...coPayload.session } : s) }
+                  : old,
+              );
+            }
+            void qc.invalidateQueries({ queryKey: sessionKeys.all });
+            void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
+            void qc.invalidateQueries({ queryKey: ["adminMap"] });
+            break;
+          }
           case "expense.created":
           case "expense.status":
             void qc.invalidateQueries({ queryKey: ["expenses"] });
+            // ["adminDashboard"] replaces ["orgSummary"] — dashboard now shows
+            // pending expense count from GET /admin/dashboard (P2-1 / P4-2).
             void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
             break;
         }

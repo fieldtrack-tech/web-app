@@ -1,7 +1,7 @@
 "use client";
 
 import { Users, MapPin, Activity, Route, TrendingUp, Map } from "lucide-react";
-import { useOrgSummary, useSessionTrend } from "@/hooks/queries/useAnalytics";
+import { useAdminDashboard, useAdminMap } from "@/hooks/queries/useDashboard";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { ActivityTrendChart } from "@/components/charts/ActivityTrendChart";
@@ -9,7 +9,6 @@ import { DistanceChart } from "@/components/charts/DistanceChart";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { PageHeader } from "@/components/ui";
 import dynamic from "next/dynamic";
-import { useAdminMap } from "@/hooks/queries/useDashboard";
 
 const FleetMap = dynamic(
   () => import("@/components/maps/FleetMap").then((m) => m.FleetMap),
@@ -17,16 +16,15 @@ const FleetMap = dynamic(
 );
 
 export default function AdminDashboardPage() {
-  const { data: summary, isLoading } = useOrgSummary();
-  const { data: trend = [] } = useSessionTrend();
+  const { data, isLoading } = useAdminDashboard();
   const { data: markers = [] } = useAdminMap();
 
-  const activityData = trend.map((row) => ({
+  const activityData = (data?.sessionTrend ?? []).map((row) => ({
     label: row.date,
     checkIns: row.sessions,
   }));
 
-  const distanceData = trend.map((row) => ({
+  const distanceData = (data?.sessionTrend ?? []).map((row) => ({
     day: row.date,
     km: row.distance,
   }));
@@ -52,36 +50,34 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle="Organisation overview" />
 
-      {/* KPI row — first card highlighted green, rest neutral */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
-          title="Total Sessions"
-          value={String(summary?.totalSessions ?? 0)}
+          title="Total Sessions Today"
+          value={String(data?.todaySessionCount ?? 0)}
           icon={<Activity className="w-5 h-5" />}
           accent="primary"
           highlighted
         />
         <KpiCard
           title="Active Employees"
-          value={String(summary?.activeEmployeesCount ?? 0)}
+          value={String(data?.activeEmployeesToday ?? 0)}
           icon={<Users className="w-5 h-5" />}
           accent="lime"
         />
         <KpiCard
-          title="Total Distance"
-          value={`${(summary?.totalDistanceKm ?? 0).toFixed(1)} km`}
+          title="Distance Today"
+          value={`${(data?.todayDistanceKm ?? 0).toFixed(1)} km`}
           icon={<Route className="w-5 h-5" />}
           accent="cyan"
         />
         <KpiCard
-          title="Total Expenses"
-          value={String(summary?.totalExpenses ?? 0)}
+          title="Pending Expenses"
+          value={String(data?.pendingExpenseCount ?? 0)}
           icon={<MapPin className="w-5 h-5" />}
           accent="purple"
         />
       </div>
 
-      {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card space-y-4">
           <div className="flex items-center justify-between">
@@ -109,7 +105,6 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Map + feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 card space-y-4">
           <div className="flex items-center justify-between">

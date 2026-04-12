@@ -37,4 +37,10 @@ export const expensesApi = {
 
   review: (id: string, status: Extract<ExpenseStatus, "APPROVED" | "REJECTED">) =>
     apiPatch<Expense>(API.expenseStatus(id), { status }),
+
+  getReceiptUploadUrl: (extension: "jpg" | "jpeg" | "png" | "webp" | "pdf", mimeType?: string) =>
+    apiPost<{ uploadUrl: string; receiptUrl: string }>(API.receiptUploadUrl, {
+      extension,
+      ...(mimeType ? { mimeType } : {}),
+    }),
 };

@@ -1,6 +1,6 @@
 import { apiGet, apiGetPaginated, apiPatch, apiPost } from "@/lib/api/client";
 import { API } from "@/lib/api/endpoints";
-import type { AuditLog, Employee, EmployeeProfileDetail, SearchResults } from "@/types";
+import type { AuditLog, AttendanceSession, Employee, EmployeeProfileDetail, SearchResults } from "@/types";
 
 export const adminApi = {
   employees: (page = 1, limit = 50, params: { search?: string; segment?: string } = {}) =>
@@ -31,14 +31,12 @@ export const adminApi = {
   setEmployeeStatus: (id: string, is_active: boolean) =>
     apiPatch<Employee>(API.setEmployeeStatus(id), { is_active }),
 
-  auditLogs: (page = 1, limit = 50) =>
-    apiGetPaginated<AuditLog>(API.auditLogs, {
-      page: String(page),
+  auditLogs: (limit = 50, before?: string) =>
+    apiGet<AuditLog[]>(API.auditLogs, {
       limit: String(limit),
+      ...(before ? { before } : {}),
     }),
 
   forceCheckout: (employeeId: string) =>
-    apiPost<{ message: string }>(API.forceCheckout, {
-      employee_id: employeeId,
-    }),
+    apiPost<AttendanceSession>(API.forceCheckout, { employee_id: employeeId }),
 };
