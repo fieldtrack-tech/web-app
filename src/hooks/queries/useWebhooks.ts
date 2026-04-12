@@ -76,3 +76,11 @@ export function useRetryDelivery() {
     onSuccess: () => void client.invalidateQueries({ queryKey: ["webhookDeliveries"] }),
   });
 }
+
+export function useTestWebhook() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (webhookId: string) => webhooksApi.test(webhookId),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["webhookDeliveries"] }),
+  });
+}

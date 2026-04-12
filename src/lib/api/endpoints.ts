@@ -58,6 +58,9 @@ export const API = {
   // Webhooks
   webhooks: "/admin/webhooks",
   webhookById: (id: string) => `/admin/webhooks/${id}`,
+  testWebhook: (id: string) => `/admin/webhooks/${id}/test`,
+  webhookLogs: "/admin/webhooks/logs",
+  retryWebhookLog: (id: string) => `/admin/webhooks/logs/${id}/retry`,
   webhookDeliveries: "/admin/webhook-deliveries",
   retryDelivery: (id: string) => `/admin/webhook-deliveries/${id}/retry`,
 

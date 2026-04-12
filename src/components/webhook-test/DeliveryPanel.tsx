@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRetryDelivery, useWebhookDeliveries, useWebhooks } from "@/hooks/queries/useWebhooks";
 import { Spinner } from "@/components/ui";
+import type { DeliveryStatus } from "@/types";
 
-export function DeliveryPanel() {
+interface DeliveryPanelProps {
+  webhookId?: string;
+}
+
+export function DeliveryPanel({ webhookId }: DeliveryPanelProps) {
   const [page, setPage] = useState(1);
-  const [filterWebhook, setFilterWebhook] = useState<string>("");
+  const [filterWebhook, setFilterWebhook] = useState<string>(webhookId ?? "");
+  const [status, setStatus] = useState<DeliveryStatus | "">("");
   const { data: hooks } = useWebhooks();
-  const { data, isLoading } = useWebhookDeliveries(page, 20, filterWebhook || undefined);
+  const { data, isLoading } = useWebhookDeliveries(page, 20, filterWebhook || undefined, status || undefined);
   const retry = useRetryDelivery();
+
+  useEffect(() => {
+    setFilterWebhook(webhookId ?? "");
+    setPage(1);
+  }, [webhookId]);
 
   const rows = data?.data ?? [];
   const total = data?.pagination.total ?? 0;
@@ -18,12 +29,22 @@ export function DeliveryPanel() {
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-manrope font-bold text-on-surface">Deliveries</h3>
-        <select className="select h-8 text-xs" value={filterWebhook} onChange={(e) => setFilterWebhook(e.target.value)}>
-          <option value="">All webhooks</option>
-          {(hooks ?? []).map((w) => (
-            <option key={w.id} value={w.id}>{w.url}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          {!webhookId ? (
+            <select className="select h-8 text-xs" value={filterWebhook} onChange={(e) => { setFilterWebhook(e.target.value); setPage(1); }}>
+              <option value="">All webhooks</option>
+              {(hooks ?? []).map((w) => (
+                <option key={w.id} value={w.id}>{w.url}</option>
+              ))}
+            </select>
+          ) : null}
+          <select className="select h-8 text-xs" value={status} onChange={(e) => { setStatus(e.target.value as DeliveryStatus | ""); setPage(1); }}>
+            <option value="">All statuses</option>
+            <option value="pending">pending</option>
+            <option value="success">success</option>
+            <option value="failed">failed</option>
+          </select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -35,22 +56,32 @@ export function DeliveryPanel() {
           <table className="data-table w-full">
             <thead>
               <tr>
+                <th>Event</th>
                 <th>Status</th>
                 <th>Webhook</th>
                 <th>Attempt</th>
-                <th>Response</th>
+                <th>Code</th>
+                <th>Last Attempt</th>
+                <th>Response Body</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((d) => (
                 <tr key={d.id}>
+                  <td>{d.event_type ?? "(unknown)"}</td>
                   <td>{d.status}</td>
                   <td className="font-mono text-xs">{d.webhook_id.slice(0, 8)}...</td>
                   <td>{d.attempt_count}</td>
-                  <td>{d.response_status ?? "-"}</td>
+                  <td>{d.response_code ?? d.response_status ?? "-"}</td>
+                  <td>{d.last_attempt_at ? new Date(d.last_attempt_at).toLocaleString() : "-"}</td>
+                  <td className="max-w-[280px] truncate" title={d.response_body ?? undefined}>{d.response_body ?? "-"}</td>
                   <td>
-                    <button className="btn-secondary h-7 px-2 text-xs" onClick={() => retry.mutate(d.id)}>
+                    <button
+                      className="btn-secondary h-7 px-2 text-xs"
+                      onClick={() => retry.mutate(d.id)}
+                      disabled={d.status !== "failed" || retry.isPending}
+                    >
                       Retry
                     </button>
                   </td>

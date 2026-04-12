@@ -358,6 +358,8 @@ export interface AdminQueuesResponse {
 
 // ─── Webhooks ─────────────────────────────────────────────────────────────
 export const WEBHOOK_EVENT_TYPES = [
+  "session.checkin",
+  "session.checkout",
   "employee.checked_in",
   "employee.checked_out",
   "expense.created",
@@ -382,9 +384,11 @@ export interface WebhookDelivery {
   id: string;
   webhook_id: string;
   event_id: string;
+  event_type: string | null;
   organization_id: string;
   status: DeliveryStatus;
   attempt_count: number;
+  response_code: number | null;
   response_status: number | null;
   response_body: string | null;
   last_attempt_at: string | null;

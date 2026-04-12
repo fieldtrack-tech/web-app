@@ -1,15 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { useDeleteWebhook, useWebhooks } from "@/hooks/queries/useWebhooks";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDeleteWebhook, useTestWebhook, useWebhooks } from "@/hooks/queries/useWebhooks";
+import { webhooksApi } from "@/lib/api/webhooks";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingState } from "@/components/ui";
 import { DeliveryPanel } from "@/components/webhook-test/DeliveryPanel";
 import { WebhookSetupCard } from "@/components/webhook-test/WebhookSetupCard";
 
 export default function AdminWebhooksPage() {
+  const client = useQueryClient();
   const { data: webhooks, isLoading, error } = useWebhooks();
   const del = useDeleteWebhook();
+  const testWebhook = useTestWebhook();
+  const toggleWebhook = useMutation({
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
+      webhooksApi.update(id, { is_active }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["webhooks"] }),
+  });
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
@@ -38,6 +47,22 @@ export default function AdminWebhooksPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    className="btn-secondary h-8 px-2 text-xs"
+                    onClick={() => testWebhook.mutate(w.id)}
+                    disabled={testWebhook.isPending}
+                  >
+                    Send Test
+                  </button>
+                  <button
+                    className="btn-secondary h-8 px-2 text-xs"
+                    onClick={() => {
+                      toggleWebhook.mutate({ id: w.id, is_active: !w.is_active });
+                    }}
+                    disabled={toggleWebhook.isPending}
+                  >
+                    {w.is_active ? "Disable" : "Enable"}
+                  </button>
                   <button className="btn-secondary h-8 px-2 text-xs" onClick={() => setExpanded((x) => (x === w.id ? null : w.id))}>
                     {expanded === w.id ? "Hide Deliveries" : "Show Deliveries"}
                   </button>
@@ -46,7 +71,8 @@ export default function AdminWebhooksPage() {
                   </button>
                 </div>
               </div>
-              {expanded === w.id ? <DeliveryPanel /> : null}
+              <p className="text-xs text-on-surface-variant">Status: {w.is_active ? "active" : "disabled"}</p>
+              {expanded === w.id ? <DeliveryPanel webhookId={w.id} /> : null}
             </div>
           ))}
         </div>
