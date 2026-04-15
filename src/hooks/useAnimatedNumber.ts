@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { formatNumber } from "@/lib/utils";
 
 /**
  * Animates a number from the previous value to `target` over `duration` ms.
@@ -42,5 +43,5 @@ export function useAnimatedNumber(target: number, duration = 900): string {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
-  return Math.round(display).toLocaleString();
+  return formatNumber(Math.round(display));
 }

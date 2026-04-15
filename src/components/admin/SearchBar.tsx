@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, X, User, Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSearch } from "@/hooks/queries/useEmployees";
+import { formatCurrency } from "@/lib/utils";
 
 export function SearchBar() {
   const [query, setQuery] = useState("");
@@ -127,7 +128,7 @@ export function SearchBar() {
                       {exp.description}
                     </p>
                     <p className="text-xs text-on-surface-variant">
-                      ₹{exp.amount.toLocaleString()} · {exp.status} · {exp.employee_name ?? "Unknown"}
+                      {formatCurrency(exp.amount)} · {exp.status} · {exp.employee_name ?? "Unknown"}
                     </p>
                   </div>
                 </button>

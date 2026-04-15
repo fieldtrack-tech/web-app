@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRetryDelivery, useWebhookDeliveries, useWebhooks } from "@/hooks/queries/useWebhooks";
 import { Spinner } from "@/components/ui";
 import type { DeliveryStatus } from "@/types";
+import { formatDateTime } from "@/lib/utils";
 
 interface DeliveryPanelProps {
   webhookId?: string;
@@ -74,7 +75,7 @@ export function DeliveryPanel({ webhookId }: DeliveryPanelProps) {
                   <td className="font-mono text-xs">{d.webhook_id.slice(0, 8)}...</td>
                   <td>{d.attempt_count}</td>
                   <td>{d.response_code ?? d.response_status ?? "-"}</td>
-                  <td>{d.last_attempt_at ? new Date(d.last_attempt_at).toLocaleString() : "-"}</td>
+                  <td>{d.last_attempt_at ? formatDateTime(d.last_attempt_at) : "-"}</td>
                   <td className="max-w-[280px] truncate" title={d.response_body ?? undefined}>{d.response_body ?? "-"}</td>
                   <td>
                     <button

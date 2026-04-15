@@ -5,12 +5,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminQueues } from "@/hooks/queries/useQueues";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingState } from "@/components/ui";
+import { formatNumber } from "@/lib/utils";
 
 function StatRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between py-1.5 border-b border-outline-variant/20 last:border-0">
       <span className="text-sm text-on-surface-variant">{label}</span>
-      <span className="text-sm font-mono font-medium text-on-surface">{value.toLocaleString()}</span>
+      <span className="text-sm font-mono font-medium text-on-surface">{formatNumber(value)}</span>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { useEmployee, useEmployeeProfile } from "@/hooks/queries/useEmployees";
 import { useEmployeeSessionHistory } from "@/hooks/queries/useSessions";
 import { useEmployeeOrgExpenses } from "@/hooks/queries/useExpenses";
 import { PageHeader, LoadingState, EmptyState, StatusBadge } from "@/components/ui";
-import { formatDuration, formatKm, formatDate, timeAgo } from "@/lib/utils";
+import { formatCurrency, formatDuration, formatKm, formatDate, timeAgo } from "@/lib/utils";
 
 const TABS = ["Summary", "Sessions", "Expenses"] as const;
 type Tab = (typeof TABS)[number];
@@ -215,7 +215,7 @@ export default function EmployeeDetailPage() {
                 {(expenses?.data ?? []).map((exp) => (
                   <tr key={exp.id}>
                     <td>{formatDate(exp.submitted_at)}</td>
-                    <td className="font-medium">₹{exp.amount.toLocaleString()}</td>
+                    <td className="font-medium">{formatCurrency(exp.amount)}</td>
                     <td className="text-on-surface-variant max-w-xs truncate">{exp.description}</td>
                     <td><StatusBadge status={exp.status} /></td>
                   </tr>

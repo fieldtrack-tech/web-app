@@ -1,6 +1,26 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { format, formatDistanceToNow, parseISO } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, parseISO } from "date-fns";
+
+const INDIAN_LOCALE = "en-IN";
+const INDIAN_CURRENCY = "INR";
+
+function parseDateOrNull(iso: string): Date | null {
+  try {
+    const date = parseISO(iso);
+    return Number.isNaN(date.getTime()) ? null : date;
+  } catch {
+    return null;
+  }
+}
+
+function formatIndianTime(date: Date): string {
+  return new Intl.DateTimeFormat(INDIAN_LOCALE, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
 
 /** Merge Tailwind classes safely. */
 export function cn(...inputs: ClassValue[]) {
@@ -24,11 +44,11 @@ export function formatKm(km: number | null | undefined): string {
   return `${km.toFixed(1)} km`;
 }
 
-/** Format currency (USD by default). */
+/** Format currency (INR by default). */
 export function formatCurrency(
   amount: number,
-  currency = "USD",
-  locale = "en-US"
+  currency = INDIAN_CURRENCY,
+  locale = INDIAN_LOCALE
 ): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
@@ -39,34 +59,44 @@ export function formatCurrency(
 
 /** Format a large number with comma separators. */
 export function formatNumber(n: number): string {
-  return new Intl.NumberFormat("en-US").format(n);
+  return new Intl.NumberFormat(INDIAN_LOCALE).format(n);
 }
 
-/** Format ISO date string as "MMM d, yyyy". */
+/** Format ISO date string as Today/Yesterday or dd MMM yyyy. */
 export function formatDate(iso: string): string {
-  try {
-    return format(parseISO(iso), "MMM d, yyyy");
-  } catch {
-    return iso;
-  }
+  const date = parseDateOrNull(iso);
+  if (!date) return iso;
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "dd MMM yyyy");
 }
 
-/** Format ISO date string as "MMM d, yyyy HH:mm". */
+/** Format ISO date string as Today/Yesterday with Indian time. */
 export function formatDateTime(iso: string): string {
-  try {
-    return format(parseISO(iso), "MMM d, yyyy HH:mm");
-  } catch {
-    return iso;
-  }
+  const date = parseDateOrNull(iso);
+  if (!date) return iso;
+  const time = formatIndianTime(date);
+  if (isToday(date)) return `Today, ${time}`;
+  if (isYesterday(date)) return `Yesterday, ${time}`;
+  return `${format(date, "dd MMM yyyy")}, ${time}`;
 }
 
-/** Relative time: "2m ago". */
+/** Relative label with Today/Yesterday, else distance-to-now fallback. */
 export function timeAgo(iso: string): string {
-  try {
-    return formatDistanceToNow(parseISO(iso), { addSuffix: true });
-  } catch {
-    return iso;
-  }
+  const date = parseDateOrNull(iso);
+  if (!date) return iso;
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return formatDistanceToNow(date, { addSuffix: true });
+}
+
+/** Compact day label for trend charts: Today, Yesterday, or calendar date. */
+export function formatDayLabel(iso: string): string {
+  const date = parseDateOrNull(iso);
+  if (!date) return iso;
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "dd MMM");
 }
 
 /** Get initials from a full name. */

@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   Cell,
 } from "recharts";
+import { formatNumber } from "@/lib/utils";
 
 interface DayData {
   day: string;
@@ -42,7 +43,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     >
       <p style={{ color: "var(--chart-text)" }}>{label}</p>
       <p className="font-semibold" style={{ color: "var(--chart-line-primary)" }}>
-        {Number(payload[0].value).toLocaleString()} km
+        {formatNumber(Number(payload[0].value))} km
       </p>
     </div>
   );

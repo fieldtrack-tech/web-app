@@ -114,7 +114,7 @@ function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-on-surface-variant uppercase tracking-wider">
-              Amount (USD)
+              Amount (INR)
             </label>
             <input
               type="number"

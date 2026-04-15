@@ -128,15 +128,27 @@ async function retryableFetch(url: string, options: RequestInit, maxRetries = 2)
   throw new ApiError("Request failed", 500);
 }
 
+function normalizeHttpErrorMessage(status: number, body: string): string {
+  const trimmed = body.trim();
+  const looksLikeHtml = /<[^>]+>/.test(trimmed);
+
+  if ([502, 503, 504, 521, 522, 523, 524].includes(status)) {
+    return "Service temporarily unavailable. Please try again shortly.";
+  }
+  if (status >= 500) {
+    return "Server error. Please try again.";
+  }
+  if (!trimmed || looksLikeHtml) {
+    return `Request failed (HTTP ${status}).`;
+  }
+  return `HTTP ${status}: ${trimmed.slice(0, 200)}`;
+}
+
 async function parseJsonOrThrow(response: Response): Promise<unknown> {
   const ct = response.headers.get("content-type") ?? "";
   if (!ct.includes("application/json")) {
     const text = await response.text();
-    throw new ApiError(
-      `API Error: Expected JSON but got "${ct}" (HTTP ${response.status}). ` +
-        `Check NEXT_PUBLIC_API_BASE_URL config. Preview: ${text.slice(0, 200)}`,
-      response.status
-    );
+    throw new ApiError(normalizeHttpErrorMessage(response.status, text), response.status);
   }
   return response.json();
 }
@@ -151,7 +163,7 @@ async function parseEnvelopeOrThrow<T extends { success?: boolean; error?: strin
     const ct = response.headers.get("content-type") ?? "";
     if (!ct.includes("application/json")) {
       const text = await response.text();
-      throw new ApiError(`HTTP ${response.status}: ${text.slice(0, 200)}`, response.status);
+      throw new ApiError(normalizeHttpErrorMessage(response.status, text), response.status);
     }
   }
 

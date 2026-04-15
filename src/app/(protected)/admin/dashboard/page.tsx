@@ -8,6 +8,7 @@ import { ActivityTrendChart } from "@/components/charts/ActivityTrendChart";
 import { DistanceChart } from "@/components/charts/DistanceChart";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { PageHeader } from "@/components/ui";
+import { formatDayLabel, formatNumber } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 const FleetMap = dynamic(
@@ -20,12 +21,12 @@ export default function AdminDashboardPage() {
   const { data: markers = [] } = useAdminMap();
 
   const activityData = (data?.sessionTrend ?? []).map((row) => ({
-    label: row.date,
+    label: formatDayLabel(row.date),
     checkIns: row.sessions,
   }));
 
   const distanceData = (data?.sessionTrend ?? []).map((row) => ({
-    day: row.date,
+    day: formatDayLabel(row.date),
     km: row.distance,
   }));
 
@@ -53,14 +54,14 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           title="Total Sessions Today"
-          value={String(data?.todaySessionCount ?? 0)}
+          value={formatNumber(data?.todaySessionCount ?? 0)}
           icon={<Activity className="w-5 h-5" />}
           accent="primary"
           highlighted
         />
         <KpiCard
           title="Active Employees"
-          value={String(data?.activeEmployeesToday ?? 0)}
+          value={formatNumber(data?.activeEmployeesToday ?? 0)}
           icon={<Users className="w-5 h-5" />}
           accent="lime"
         />
@@ -72,7 +73,7 @@ export default function AdminDashboardPage() {
         />
         <KpiCard
           title="Pending Expenses"
-          value={String(data?.pendingExpenseCount ?? 0)}
+          value={formatNumber(data?.pendingExpenseCount ?? 0)}
           icon={<MapPin className="w-5 h-5" />}
           accent="purple"
         />

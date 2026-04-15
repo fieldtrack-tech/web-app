@@ -12,10 +12,11 @@ import {
 } from "@/hooks/queries/useApiKeys";
 import { ApiError } from "@/types";
 import type { ApiKeyScope } from "@/types";
+import { formatDateTime } from "@/lib/utils";
 
 function formatDate(value: string | null): string {
   if (!value) return "Never";
-  return new Date(value).toLocaleString();
+  return formatDateTime(value);
 }
 
 const SCOPE_LABELS: Record<ApiKeyScope, string> = {
