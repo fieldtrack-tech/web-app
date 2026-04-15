@@ -30,6 +30,7 @@ export function useSnapshotHealth() {
     queryFn: () => apiGet<SnapshotHealthData>("/internal/snapshot-health"),
     staleTime: 60_000,
     refetchInterval: 60_000,
+    meta: { suppressGlobalError: true },
     // Don't show errors to user if endpoint is unavailable
     retry: 1,
   });

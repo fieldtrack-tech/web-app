@@ -7,7 +7,14 @@ function emitQueryError(message: string, code?: ApiErrorCode, requestId?: string
   window.dispatchEvent(new CustomEvent("fieldtrack:query-error", { detail: { message, code, requestId } }));
 }
 
-function shouldSuppressError(error: unknown): boolean {
+function querySuppressesGlobalError(query: unknown): boolean {
+  if (!query || typeof query !== "object") return false;
+  const q = query as { meta?: Record<string, unknown>; options?: { meta?: Record<string, unknown> } };
+  return q.meta?.suppressGlobalError === true || q.options?.meta?.suppressGlobalError === true;
+}
+
+function shouldSuppressError(error: unknown, query?: unknown): boolean {
+  if (querySuppressesGlobalError(query)) return true;
   if (!(error instanceof ApiError)) return false;
   // 401 — withAuthRetry has already attempted a refresh and is handling the
   // redirect. Suppress the toast; there's nothing the user can action here.
@@ -38,9 +45,9 @@ function logErrorInDev(label: string, error: unknown): void {
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError(error) {
+    onError(error, query) {
       logErrorInDev("Query error", error);
-      if (shouldSuppressError(error)) return;
+      if (shouldSuppressError(error, query)) return;
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
       const code = error instanceof ApiError ? error.code : undefined;
       const requestId = error instanceof ApiError ? error.requestId : undefined;
