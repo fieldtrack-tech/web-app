@@ -60,7 +60,7 @@ export function useAdminSSE({ enabled = true }: { enabled?: boolean } = {}) {
             const ciPayload = data.payload as { sessionId?: string; employeeId?: string; session?: AttendanceSession };
             if (ciPayload.session) {
               qc.setQueriesData<PaginatedResponse<AttendanceSession>>(
-                { queryKey: sessionKeys.orgSegment("active") },
+                { queryKey: sessionKeys.all },
                 (old) => old
                   ? { ...old, data: [ciPayload.session!, ...old.data.filter((s) => s.id !== ciPayload.session!.id)] }
                   : old,
@@ -74,7 +74,7 @@ export function useAdminSSE({ enabled = true }: { enabled?: boolean } = {}) {
           case "session.checkout": {
             // Optimistic patch: update checkout_at on the session across all cached
             // session pages so the UI flips from ACTIVE to CLOSED immediately.
-            // Still invalidate so segment lists (active/recent/inactive) re-sort.
+            // Still invalidate so status lists (active/recent/inactive) re-sort.
             const coPayload = data.payload as { sessionId?: string; employeeId?: string; session?: AttendanceSession };
             if (coPayload.sessionId && coPayload.session) {
               qc.setQueriesData<PaginatedResponse<AttendanceSession>>(

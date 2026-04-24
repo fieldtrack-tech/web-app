@@ -13,6 +13,8 @@ const RouteMap = dynamic(
   { ssr: false, loading: () => <div className="h-48 animate-pulse rounded-xl bg-surface-container" /> }
 );
 
+type SessionStatusFilter = "all" | "active" | "recent" | "inactive";
+
 function SessionRouteRow({ session }: { session: AttendanceSession }) {
   const [expanded, setExpanded] = useState(false);
   return (
@@ -52,8 +54,9 @@ function SessionMapExpanded({ sessionId }: { sessionId: string }) {
 
 export default function EmployeeSessionsPage() {
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<SessionStatusFilter>("all");
   const limit = 15;
-  const { data, isLoading, isError } = useMySessions(page, limit);
+  const { data, isLoading, isError } = useMySessions(page, limit, status);
 
   const sessions = data?.data ?? [];
   const hasMore = page * limit < (data?.pagination.total ?? 0);
@@ -61,6 +64,21 @@ export default function EmployeeSessionsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="My Sessions" subtitle="Your session history" />
+
+      <div className="flex flex-wrap gap-1 rounded-lg bg-surface-container-high p-1 w-fit max-w-full">
+        {(["all", "active", "recent", "inactive"] as const).map((value) => (
+          <button
+            key={value}
+            onClick={() => {
+              setStatus(value);
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${status === value ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"}`}
+          >
+            {value.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
       {isLoading  && <LoadingState />}
       {isError    && <EmptyState title="Failed to load" description="Please try again." />}

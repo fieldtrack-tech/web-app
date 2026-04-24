@@ -9,7 +9,7 @@ import type { ExpenseStatus } from "@/types";
 
 export const expenseKeys = {
   all: ["expenses"] as const,
-  mine: (page: number, limit: number) => ["expenses", "mine", page, limit] as const,
+  mine: (page: number, limit: number, status: string) => ["expenses", "mine", page, limit, status] as const,
   admin: (page: number, limit: number) => ["expenses", "admin", page, limit] as const,
   summary: (page: number, limit: number) => ["expenses", "summary", page, limit] as const,
   employee: (employeeId: string, page: number, limit: number) =>
@@ -18,10 +18,10 @@ export const expenseKeys = {
     ["expenses", "employee-pending", employeeId] as const,
 };
 
-export function useMyExpenses(page = 1, limit = 50) {
+export function useMyExpenses(page = 1, limit = 50, status = "all") {
   return useQuery({
-    queryKey: expenseKeys.mine(page, limit),
-    queryFn: () => expensesApi.myExpenses(page, limit),
+    queryKey: expenseKeys.mine(page, limit, status),
+    queryFn: () => expensesApi.myExpenses(page, limit, status),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });

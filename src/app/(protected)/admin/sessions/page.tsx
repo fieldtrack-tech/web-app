@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSegmentedOrgSessions, useForceCheckout } from "@/hooks/queries/useSessions";
+import { useOrgSessions, useForceCheckout } from "@/hooks/queries/useSessions";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
@@ -12,7 +12,7 @@ import { ActivityBadge } from "@/components/ActivityBadge";
 import { formatDate, formatDuration, formatKm } from "@/lib/utils";
 import type { ActivityStatus, AttendanceSession } from "@/types";
 
-type FilterTab = "all" | ActivityStatus;
+type FilterTab = "all" | "active" | "recent" | "inactive";
 
 function deriveStatus(session: AttendanceSession): ActivityStatus {
   if (!session.checkout_at) return "ACTIVE";
@@ -25,14 +25,8 @@ export default function AdminSessionsPage() {
   const [tab, setTab] = useState<FilterTab>("all");
   const forceCheckoutMutation = useForceCheckout();
 
-  const {
-    data: sessions,
-    isLoading,
-    isLoadingRecent,
-    isLoadingInactive,
-    error,
-    refetch,
-  } = useSegmentedOrgSessions();
+  const { data, isLoading, error, refetch } = useOrgSessions(1, 100, tab);
+  const sessions = data?.data ?? [];
 
   const grouped = useMemo(() => {
     const map = new Map<string, AttendanceSession[]>();
@@ -63,8 +57,6 @@ export default function AdminSessionsPage() {
 
   if (!permissions.viewOrgSessions) return null;
 
-  const filtered = tab === "all" ? grouped : grouped.filter((g) => g.status === tab);
-
   return (
     <div className="space-y-4">
       <PageHeader
@@ -73,15 +65,13 @@ export default function AdminSessionsPage() {
       />
 
       <div className="flex flex-wrap gap-1 rounded-lg bg-surface-container-high p-1 w-fit max-w-full">
-        {(["all", "ACTIVE", "RECENT", "INACTIVE"] as const).map((k) => (
+        {(["all", "active", "recent", "inactive"] as const).map((k) => (
           <button
             key={k}
             onClick={() => setTab(k as FilterTab)}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === k ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             {k.toUpperCase()}
-            {k === "RECENT" && isLoadingRecent ? " …" : ""}
-            {k === "INACTIVE" && isLoadingInactive ? " …" : ""}
           </button>
         ))}
       </div>
@@ -90,7 +80,7 @@ export default function AdminSessionsPage() {
 
       {isLoading ? (
         <LoadingSkeleton variant="table" />
-      ) : filtered.length === 0 ? (
+      ) : grouped.length === 0 ? (
         <EmptyState
           title={tab === "all" ? "No sessions yet" : `No ${tab.toLowerCase()} sessions`}
           description={tab === "all" ? "Session activity will appear here once employees check in." : "Try a different filter."}
@@ -111,7 +101,7 @@ export default function AdminSessionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => (
+              {grouped.map((row) => (
                 <tr key={row.employeeId}>
                   <td>
                     <Link href={`/admin/employees/${row.employeeId}`} className="font-medium hover:text-primary transition-colors">

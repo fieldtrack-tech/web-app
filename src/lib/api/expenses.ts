@@ -15,10 +15,11 @@ export const expensesApi = {
     extension?: string;
   }) => apiPost<Expense>(API.createExpense, payload),
 
-  myExpenses: (page = 1, limit = 50) =>
+  myExpenses: (page = 1, limit = 50, status = "all") =>
     apiGetPaginated<Expense>(API.expenses, {
       page: String(page),
       limit: String(limit),
+      status,
     }),
 
   adminExpenses: (page = 1, limit = 50, params: AdminExpenseParams = {}) =>

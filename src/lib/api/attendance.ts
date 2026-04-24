@@ -7,10 +7,11 @@ export const attendanceApi = {
 
   checkOut: () => apiPost<AttendanceSession>("/attendance/check-out", {}),
 
-  mySessions: (page = 1, limit = 50) =>
+  mySessions: (page = 1, limit = 50, status = "all") =>
     apiGetPaginated<AttendanceSession>(API.sessions, {
       page: String(page),
       limit: String(limit),
+      status,
     }),
 
   orgSessions: (page = 1, limit = 50, status?: string) =>
@@ -42,6 +43,7 @@ export const attendanceApi = {
     const page = await apiGetPaginated<AttendanceSession>(API.sessions, {
       page: "1",
       limit: "50",
+      status: "all",
     });
     return page.data.find((s) => s.id === id);
   },

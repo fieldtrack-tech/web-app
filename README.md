@@ -186,3 +186,6 @@ npm run build
 npm run start
 ```
 
+# Contract Status
+
+The web app consumes the canonical backend filters documented in `API_USAGE.md`. Query hooks include filter values in React Query keys and pass `status` to the API layer instead of doing contract filtering only in the browser.

@@ -10,33 +10,33 @@ import type { AttendanceSession, PaginatedResponse } from "@/types";
 
 export const sessionKeys = {
   all: ["sessions"] as const,
-  mine: (page: number, limit: number) => ["sessions", "mine", page, limit] as const,
-  org: (page: number, limit: number) => ["sessions", "org", page, limit] as const,
-  orgSegment: (status: string) => ["sessions", "org", "segment", status] as const,
+  mine: (page: number, limit: number, status: string) => ["sessions", "mine", page, limit, status] as const,
+  org: (page: number, limit: number, status: string) => ["sessions", "org", page, limit, status] as const,
+  orgStatus: (status: string) => ["sessions", "org", "status", status] as const,
   detail: (id: string) => ["sessions", "detail", id] as const,
   employeeHistory: (employeeId: string) => ["sessions", "employee", employeeId] as const,
 };
 
-export function useMySessions(page = 1, limit = 50) {
+export function useMySessions(page = 1, limit = 50, status = "all") {
   return useQuery<PaginatedResponse<AttendanceSession>>({
-    queryKey: sessionKeys.mine(page, limit),
-    queryFn: () => attendanceApi.mySessions(page, limit),
+    queryKey: sessionKeys.mine(page, limit, status),
+    queryFn: () => attendanceApi.mySessions(page, limit, status),
     staleTime: 30_000,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useOrgSessions(page = 1, limit = 50) {
+export function useOrgSessions(page = 1, limit = 50, status = "all") {
   return useQuery<PaginatedResponse<AttendanceSession>>({
-    queryKey: sessionKeys.org(page, limit),
-    queryFn: () => attendanceApi.orgSessions(page, limit),
+    queryKey: sessionKeys.org(page, limit, status),
+    queryFn: () => attendanceApi.orgSessions(page, limit, status),
     staleTime: 30_000,
     placeholderData: keepPreviousData,
   });
 }
 
 /**
- * Segmented sessions loading:
+ * Status-bucket session loading:
  * 1. Active sessions load immediately (critical data)
  * 2. Recent + Inactive sessions load in PARALLEL after active completes
  *
@@ -47,9 +47,9 @@ export function useOrgSessions(page = 1, limit = 50) {
 // pagination on the sessions page in a future iteration.
 const SEGMENT_PAGE_LIMIT = 100;
 
-export function useSegmentedOrgSessions() {
+export function useStatusBucketedOrgSessions() {
   const activeQuery = useQuery<PaginatedResponse<AttendanceSession>>({
-    queryKey: sessionKeys.orgSegment("active"),
+    queryKey: sessionKeys.orgStatus("active"),
     queryFn: () => attendanceApi.orgSessions(1, SEGMENT_PAGE_LIMIT, "active"),
     staleTime: 30_000,
   });
@@ -58,14 +58,14 @@ export function useSegmentedOrgSessions() {
   const activeLoaded = !activeQuery.isLoading;
 
   const recentQuery = useQuery<PaginatedResponse<AttendanceSession>>({
-    queryKey: sessionKeys.orgSegment("recent"),
+    queryKey: sessionKeys.orgStatus("recent"),
     queryFn: () => attendanceApi.orgSessions(1, SEGMENT_PAGE_LIMIT, "recent"),
     staleTime: 60_000,
     enabled: activeLoaded,
   });
 
   const inactiveQuery = useQuery<PaginatedResponse<AttendanceSession>>({
-    queryKey: sessionKeys.orgSegment("inactive"),
+    queryKey: sessionKeys.orgStatus("inactive"),
     queryFn: () => attendanceApi.orgSessions(1, SEGMENT_PAGE_LIMIT, "inactive"),
     staleTime: 60_000,
     // Load in parallel with recent — both enabled once active completes

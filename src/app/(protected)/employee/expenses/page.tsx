@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { PlusCircle, X, Paperclip } from "lucide-react";
 
 type AllowedExtension = "jpg" | "jpeg" | "png" | "webp" | "pdf";
+type ExpenseStatusFilter = "all" | "PENDING" | "APPROVED" | "REJECTED" | "processed";
 
 const ALLOWED_MIME_TYPES: ReadonlySet<string> = new Set([
   "image/jpeg",
@@ -208,9 +209,10 @@ function SubmitExpenseModal({ onClose }: { onClose: () => void }) {
 export default function EmployeeExpensesPage() {
   const [page,      setPage]      = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [status,    setStatus]    = useState<ExpenseStatusFilter>("all");
   const limit = 15;
 
-  const { data, isLoading, isError } = useMyExpenses(page, limit);
+  const { data, isLoading, isError } = useMyExpenses(page, limit, status);
 
   const expenses = data?.data ?? [];
   const hasMore = page * limit < (data?.pagination.total ?? 0);
@@ -223,6 +225,21 @@ export default function EmployeeExpensesPage() {
           <PlusCircle className="w-4 h-4" />
           Submit Expense
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-1 rounded-lg bg-surface-container-high p-1 w-fit max-w-full">
+        {(["all", "PENDING", "APPROVED", "REJECTED", "processed"] as const).map((value) => (
+          <button
+            key={value}
+            onClick={() => {
+              setStatus(value);
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${status === value ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"}`}
+          >
+            {value === "processed" ? "PROCESSED" : value}
+          </button>
+        ))}
       </div>
 
       {isLoading && <LoadingState />}
