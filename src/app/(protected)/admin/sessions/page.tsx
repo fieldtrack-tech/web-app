@@ -26,9 +26,10 @@ export default function AdminSessionsPage() {
   const forceCheckoutMutation = useForceCheckout();
 
   const { data, isLoading, error, refetch } = useOrgSessions(1, 100, tab);
-  const sessions = data?.data ?? [];
+  const sessionData = data?.data;
 
   const grouped = useMemo(() => {
+    const sessions = sessionData ?? [];
     const map = new Map<string, AttendanceSession[]>();
     for (const s of sessions) {
       const arr = map.get(s.employee_id) ?? [];
@@ -53,7 +54,7 @@ export default function AdminSessionsPage() {
       if (diff !== 0) return diff;
       return new Date(b.latest.checkin_at).getTime() - new Date(a.latest.checkin_at).getTime();
     });
-  }, [sessions]);
+  }, [sessionData]);
 
   if (!permissions.viewOrgSessions) return null;
 

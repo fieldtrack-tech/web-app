@@ -1,191 +1,104 @@
-# FieldTrack — Web
+# FieldTrack Web
 
-**FieldTrack Web** is a Next.js 14 frontend for managing field workforce operations. It provides live GPS tracking, session management, expense tracking and approvals, attendance analytics, and a full admin portal.
+Frontend application for FieldTrack operations, built with Next.js App Router.
 
-> **Repository:** `fieldtrack-tech/web`  
-> **Backend (API):** [`fieldtrack-tech/api`](https://github.com/fieldtrack-tech/api)
+## Overview
 
----
+This app provides role-aware experiences for employees and admins.
+
+Implemented capabilities include:
+
+- employee attendance and session history
+- location route views and tracking-oriented dashboards
+- expense submission and status tracking
+- admin dashboards, employee management, analytics, queue/system views, and webhook tooling
+- real-time admin updates via SSE (`/admin/events`)
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript (strict) |
-| Styling | Tailwind CSS + custom CSS design system |
-| Auth | Supabase Auth (`@supabase/ssr`, JWT) |
-| Server State | TanStack Query v5 |
-| Maps | Leaflet / React-Leaflet (OpenStreetMap) |
-| Charts | Recharts |
-| Schema Validation | Zod |
+- Next.js 14 (App Router)
+- React 18
+- TypeScript
+- TanStack React Query v5
+- Supabase SSR/Auth (`@supabase/ssr`, `@supabase/supabase-js`)
+- Tailwind CSS + tokenized design system
+- Leaflet/React-Leaflet
+- Recharts
+- Zod
 
----
+## Architecture Summary
 
-## Architecture
+Primary folders:
 
-```
-Browser
-  └── fieldtrack-tech/web  (this repo — Next.js, Vercel)
-        └── NEXT_PUBLIC_API_BASE_URL
-              └── fieldtrack-tech/api  (Express/Node.js, separate deployment)
-                    └── Supabase (PostgreSQL + Auth)
-```
+- `src/app`: route tree and layouts
+- `src/components`: shared UI and feature components
+- `src/contexts`: auth/session context
+- `src/hooks/queries`: React Query hooks and query key definitions
+- `src/lib/api`: typed API modules and endpoint constants
+- `src/lib/query-client.ts`: global query/mutation defaults
 
-This frontend is **fully standalone**. It communicates with the backend exclusively via `NEXT_PUBLIC_API_BASE_URL`. There are no shared packages, monorepo dependencies, or direct database access from the frontend.
+Auth and role model:
 
----
+- Supabase session is source of auth state
+- middleware guards protected routes (`src/middleware.ts`)
+- admin pages require `role === ADMIN`
+- protected layout enables admin SSE only for admin users
 
-## Prerequisites
+## Environment
 
-- Node.js 18+
-- npm 9+
-- A running [FieldTrack API](https://github.com/fieldtrack-tech/api) instance
-- A Supabase project
+Required variables:
 
----
+- `NEXT_PUBLIC_API_BASE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-## Setup
+Optional proxy variable:
+
+- `API_DESTINATION_URL` (used when base URL is `/api/proxy`)
+
+## Local Development
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Copy the example env file and fill in values
-cp .env.example .env.local
-
-# 3. Start the dev server (http://localhost:3000)
 npm run dev
 ```
 
----
+Scripts:
 
-## Environment Variables
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+- `npm run type-check`
 
-Copy `.env.example` to `.env.local` and supply values. **Never commit `.env.local`.**
+## Data Layer Behavior
 
-| Variable | Required | Description |
-|---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | ✅ Yes | Backend API base URL (e.g. `https://api.fieldtrack.app` or `/api/proxy`) |
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ Yes | Your Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Yes | Supabase public anon key |
-| `API_DESTINATION_URL` | No | Server-side rewrite target (used with `/api/proxy` proxy mode) |
+React Query defaults (`src/lib/query-client.ts`):
 
-### Proxy Mode
+- `staleTime`: 60s global default
+- `gcTime`: 5m
+- retries disabled for `401/403`, single retry for other failures
+- global query/mutation error event dispatch (`fieldtrack:query-error`)
 
-If your API does not support CORS for the browser origin, set:
+HTTP client behavior (`src/lib/api/client.ts`):
 
-```env
-NEXT_PUBLIC_API_BASE_URL=/api/proxy
-API_DESTINATION_URL=https://api.fieldtrack.app
-```
+- bearer token injection from Supabase session
+- deduplicated token refresh on 401
+- request timeout and typed network errors
+- envelope and paginated response parsing
 
-Next.js will rewrite `/api/proxy/:path*` → `API_DESTINATION_URL/:path*` server-side, avoiding CORS entirely.
+## Role-Based UI
 
----
+- Employee navigation: dashboard, sessions, expenses, profile, leaderboard
+- Admin navigation: dashboard, tracking/map, sessions, employees, analytics, expenses, monitoring, queues, retry intents, webhooks, API keys, system health
 
-## Scripts
+## API Contract Usage
 
-```bash
-npm run dev          # Start dev server on port 3000
-npm run build        # Production build
-npm run start        # Start production server on port 3000
-npm run lint         # ESLint
-npm run type-check   # TypeScript type check (no emit)
-```
+The frontend calls API endpoints from `src/lib/api/endpoints.ts` and domain modules in `src/lib/api/*`.
 
----
+Contract-level details are documented in `API_USAGE.md`.
 
-## Project Structure
+## Additional Docs
 
-```
-src/
-├── app/
-│   ├── (auth)/            # Login page
-│   ├── (protected)/       # Authenticated routes
-│   │   ├── dashboard/     # Employee home dashboard
-│   │   ├── sessions/      # Session history
-│   │   ├── expenses/      # Expense claims
-│   │   ├── leaderboard/   # Org-wide leaderboard
-│   │   ├── profile/       # User profile
-│   │   ├── employee/      # Employee self-service views
-│   │   └── admin/         # Admin-only section
-│   │       ├── dashboard/  # Org KPIs + live map
-│   │       ├── tracking/   # Real-time location tracking
-│   │       ├── sessions/   # Session management
-│   │       ├── employees/  # Employee management
-│   │       ├── analytics/  # Org analytics
-│   │       ├── expenses/   # Expense approvals
-│   │       ├── audit-logs/ # Security audit log (dev only)
-│   │       ├── queues/     # Job queue inspector (dev only)
-│   │       ├── webhooks/   # Webhook management
-│   │       └── monitoring/ # API health monitoring
-│   ├── globals.css        # Global CSS + design tokens
-│   └── providers.tsx      # TanStack Query + Toast providers
-├── components/            # Shared UI components
-├── contexts/              # React contexts (AuthContext)
-├── hooks/
-│   └── queries/           # TanStack Query hooks (per-domain)
-├── lib/
-│   ├── api/               # Typed API client (per-domain modules)
-│   ├── auth/              # Role extraction helpers
-│   ├── env.ts             # Zod-validated environment schema
-│   ├── query-client.ts    # Global QueryClient configuration
-│   └── utils.ts           # Shared utility functions
-└── types/                 # Shared TypeScript types
-```
-
----
-
-## Authentication & Authorization
-
-- Auth is handled via **Supabase SSR** with JWT session validation in Next.js middleware.
-- Middleware (`src/middleware.ts`) guards all protected routes and enforces role-based redirects.
-- Admin routes (`/admin/*`) require `role === "ADMIN"` in the JWT claims.
-- Dev-only routes (`/admin/queues`, `/admin/audit-logs`) additionally require `app_metadata.is_dev === true`.
-
----
-
-## Maps
-
-This project uses **[Leaflet](https://leafletjs.com/)** with **[React-Leaflet](https://react-leaflet.js.org/)** and **OpenStreetMap** tiles for map rendering.
-
-- **No API key required** — OpenStreetMap is free and open-source
-- Live fleet tracking and route visualization in real time
-- Maps are rendered client-side with dynamic marker clustering
-- Tile layers use CARTO's dark theme for consistency with the UI
-
----
-
-## Development Notes
-
-- The app uses a **custom CSS design system** — no third-party UI library. Design tokens are defined in `globals.css` as CSS custom properties and mapped in `tailwind.config.ts`.
-- **TanStack Query** is configured with global error handling, 401 suppression, and exponential backoff in `src/lib/query-client.ts`.
-- `@tanstack/react-query-devtools` renders only in `development` mode.
-- Environment variables are validated at startup via **Zod** in `src/lib/env.ts`. The app throws early with a clear message if any required variable is missing.
-
----
-
-## Deployment
-
-Deployed via **[Vercel](https://vercel.com)** with automatic deploys on push to `main`.
-
-**Required Vercel environment variables:**
-
-| Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Production API URL (or `/api/proxy`) |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `API_DESTINATION_URL` | *(Required only in proxy mode)* |
-
-For self-hosted deployment:
-
-```bash
-npm run build
-npm run start
-```
-
-# Contract Status
-
-The web app consumes the canonical backend filters documented in `API_USAGE.md`. Query hooks include filter values in React Query keys and pass `status` to the API layer instead of doing contract filtering only in the browser.
+- `UI_ARCHITECTURE.md`
+- `API_USAGE.md`
