@@ -12,8 +12,7 @@
  * bundle.  In proxy mode you set NEXT_PUBLIC_API_BASE_URL=/api/proxy (safe to expose)
  * and API_DESTINATION_URL=https://api.example.com (server-side only, never in bundle).
  *
- * Fully buffers the backend response body before returning so callers never
- * receive a truncated / empty body ("Unexpected end of JSON input").
+ * Buffers API responses and forwards the admin event stream as it arrives.
  */
 
 function resolveDestination(): string | undefined {
@@ -30,7 +29,7 @@ const DESTINATION = resolveDestination();
 
 async function handler(
   req: Request,
-  { params }: { params: { path: string[] } },
+  { params }: { params: Promise<{ path: string[] }> },
 ): Promise<Response> {
   if (!DESTINATION) {
     return new Response(
@@ -44,14 +43,21 @@ async function handler(
     );
   }
 
-  const path = params.path.join("/");
-  const query = req.url.includes("?") ? "?" + req.url.split("?")[1] : "";
-  const url = `${DESTINATION}/${path}${query}`;
+  const segments = (await params).path;
+  if (segments.some((segment) => segment === "." || segment === "..")) {
+    return new Response(null, { status: 400 });
+  }
+  const path = segments.map(encodeURIComponent).join("/");
+  const query = new URL(req.url).search;
+  const url = `${DESTINATION.replace(/\/+$/, "")}/${path}${query}`;
+  const streamEvents = req.method === "GET" && path === "admin/events";
 
   // Strip hop-by-hop / routing headers that must not be forwarded
   const headers = new Headers(req.headers);
   headers.delete("host");
   headers.delete("connection");
+  headers.delete("cookie");
+  if (streamEvents) headers.set("accept-encoding", "identity");
 
   const body =
     req.method === "GET" || req.method === "HEAD"
@@ -59,40 +65,45 @@ async function handler(
       : await req.arrayBuffer();
 
   let res: Response;
+  const upstream = new AbortController();
+  const timeout = setTimeout(() => upstream.abort(), 15_000);
   try {
     res = await fetch(url, {
       method: req.method,
       headers,
       body,
-      // Abort if the backend takes longer than 15 s
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.any([req.signal, upstream.signal]),
+      cache: "no-store",
+      redirect: "manual",
     });
+    const responseHeaders = new Headers(res.headers);
+    responseHeaders.delete("transfer-encoding");
+    responseHeaders.delete("content-encoding");
+    responseHeaders.delete("content-length");
+    responseHeaders.delete("connection");
+    responseHeaders.set("cache-control", "no-store");
+
+    if (streamEvents && res.ok && responseHeaders.get("content-type")?.startsWith("text/event-stream")) {
+      responseHeaders.set("cache-control", "no-cache, no-transform");
+      responseHeaders.set("x-accel-buffering", "no");
+      return new Response(res.body, { status: res.status, headers: responseHeaders });
+    }
+
+    const noBody = req.method === "HEAD" || res.status === 204 || res.status === 205 || res.status === 304;
+    return new Response(noBody ? null : await res.arrayBuffer(), { status: res.status, headers: responseHeaders });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upstream fetch failed";
     return new Response(JSON.stringify({ error: message }), {
       status: 502,
       headers: { "content-type": "application/json" },
     });
+  } finally {
+    clearTimeout(timeout);
   }
-
-  // Always read the full body into memory — never pipe the raw ReadableStream.
-  // Streaming `res.body` directly through Next.js edge/node runtime can result
-  // in the stream being consumed or closed before the client reads it, producing
-  // empty responses and "Unexpected end of JSON input" on the frontend.
-  const responseBody = await res.arrayBuffer();
-
-  // Copy response headers; drop transfer-encoding so Node/browser can handle
-  // the already-buffered body without chunked-encoding confusion.
-  const responseHeaders = new Headers(res.headers);
-  responseHeaders.delete("transfer-encoding");
-
-  return new Response(responseBody, {
-    status: res.status,
-    headers: responseHeaders,
-  });
 }
 
 export const GET = handler;
+export const HEAD = handler;
 export const POST = handler;
 export const PATCH = handler;
 export const PUT = handler;

@@ -1,15 +1,18 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
+import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { derivePermissions } from "@/lib/permissions";
-import { extractRoleFromSession } from "@/lib/auth/role";
+import { extractRoleFromSession, sessionIdentityKey } from "@/lib/auth/role";
+import { setApiSession } from "@/lib/api/client";
 import type { UserPermissions, UserRole } from "@/types";
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
+  identityKey: string | null;
   role: UserRole | null;
   permissions: UserPermissions;
   isLoading: boolean;
@@ -28,61 +31,49 @@ const defaultPermissions: UserPermissions = {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   session: null,
+  identityKey: null,
   role: null,
   permissions: defaultPermissions,
   isLoading: true,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
+  const previousIdentity = useRef<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
   const [isLoading, setIsLoading] = useState(true);
 
-  function applySession(s: Session | null) {
-    setSession(s);
-    setUser(s?.user ?? null);
-
-    if (s) {
-      const resolvedRole = extractRoleFromSession(s, { allowUserMetadataFallback: true });
-      setRole(resolvedRole);
-      setPermissions(derivePermissions(resolvedRole));
-    } else {
-      setRole(null);
-      setPermissions(defaultPermissions);
-    }
-
-    setIsLoading(false);
-  }
-
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: s } }: { data: { session: Session | null } }) => {
-        applySession(s);
-      });
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, s: Session | null) => {
-      applySession(s);
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      const nextIdentity = nextSession ? sessionIdentityKey(nextSession) : null;
+      setApiSession(nextSession, nextIdentity);
+      if (previousIdentity.current !== nextIdentity) {
+        previousIdentity.current = nextIdentity;
+        void queryClient.cancelQueries();
+        queryClient.clear();
+      }
+      setSession(nextSession);
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(() => {
+    const role = session ? extractRoleFromSession(session) : null;
     return {
-      user,
+      user: session?.user ?? null,
       session,
+      identityKey: session ? sessionIdentityKey(session) : null,
       role,
-      permissions,
+      permissions: role ? derivePermissions(role) : defaultPermissions,
       isLoading,
     };
-  }, [user, session, role, permissions, isLoading]);
+  }, [session, isLoading]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}><Fragment key={value.identityKey}>{children}</Fragment></AuthContext.Provider>;
 }
 
 export function useAuthContext() {

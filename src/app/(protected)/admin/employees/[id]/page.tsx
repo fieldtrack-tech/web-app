@@ -38,6 +38,7 @@ export default function EmployeeDetailPage() {
           subtitle={employee.employee_code ? `Employee #${employee.employee_code}` : "Employee profile"}
           actions={
             <div className="flex items-center gap-2">
+              <Link href={`/admin/tracking/${id}`} className="btn-secondary">Live location</Link>
               {prof?.employee?.is_checked_in && (
                 <span className="badge-success gap-1.5 text-xs">
                   <Activity className="w-3 h-3" />

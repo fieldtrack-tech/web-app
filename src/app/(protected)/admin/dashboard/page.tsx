@@ -18,7 +18,7 @@ const FleetMap = dynamic(
 
 export default function AdminDashboardPage() {
   const { data, isLoading } = useAdminDashboard();
-  const { data: markers = [] } = useAdminMap();
+  const { data: fleet = [] } = useAdminMap();
 
   const activityData = (data?.sessionTrend ?? []).map((row) => ({
     label: formatDayLabel(row.date),
@@ -28,14 +28,6 @@ export default function AdminDashboardPage() {
   const distanceData = (data?.sessionTrend ?? []).map((row) => ({
     day: formatDayLabel(row.date),
     km: row.distance,
-  }));
-
-  const fleet = markers.map((marker) => ({
-    employeeId: marker.employeeId,
-    employeeName: marker.employeeName,
-    latitude: marker.latitude,
-    longitude: marker.longitude,
-    status: (marker.status === "ACTIVE" ? "ACTIVE" : "CLOSED") as "ACTIVE" | "CLOSED",
   }));
 
   if (isLoading) {
@@ -112,7 +104,7 @@ export default function AdminDashboardPage() {
             <div>
               <p className="font-lexend font-bold text-base text-on-surface">Live Fleet</p>
               <p className="text-xs text-on-surface-variant mt-0.5">
-                {fleet.filter((f) => f.status === "ACTIVE").length} active · {fleet.length} total
+                {fleet.filter((employee) => !employee.stale).length} live · {fleet.filter((employee) => employee.stale).length} delayed
               </p>
             </div>
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent-lime/10">

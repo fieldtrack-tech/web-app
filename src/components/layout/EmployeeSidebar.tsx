@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { label: "Home",     href: "/employee/dashboard", icon: Home },
   { label: "Sessions", href: "/employee/sessions", icon: Timer },
   { label: "Expenses", href: "/employee/expenses", icon: Receipt },
+  { label: "My Earnings", href: "/employee/earnings", icon: Receipt },
   { label: "Profile",  href: "/profile",           icon: User },
   { label: "Leaderboard", href: "/leaderboard",    icon: Trophy },
 ];

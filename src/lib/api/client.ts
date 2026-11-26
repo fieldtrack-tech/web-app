@@ -1,78 +1,59 @@
 import { supabase } from "@/lib/supabase";
 import { ApiError, PaginatedResponse } from "@/types";
 import { env } from "@/lib/env";
+import { sessionIdentityKey } from "@/lib/auth/role";
+import type { Session } from "@supabase/supabase-js";
 import type { ZodSchema } from "zod";
 
 const BASE_URL = env.API_BASE_URL;
 
-// ─── Token cache ─────────────────────────────────────────────────────────
-let _cachedToken: string | null = null;
-let _tokenExpiry: number = 0;
+let _accessToken: string | undefined;
+let _apiIdentity: string | null = null;
+let _identityVersion = 0;
 
 // Shared inflight refresh — at most one simultaneous supabase.auth.refreshSession().
 // All concurrent 401 handlers await the same promise; none can start a second refresh.
-let _refreshPromise: Promise<boolean> | null = null;
+let _refreshPromise: Promise<void> | null = null;
 
-export function clearAuthTokenCache() {
-  _cachedToken = null;
-  _tokenExpiry = 0;
+export function setApiSession(session: Session | null, identity = session ? sessionIdentityKey(session) : null) {
+  _accessToken = session?.access_token;
+  if (identity === _apiIdentity) return;
+  _apiIdentity = identity;
+  _identityVersion++;
+  _refreshPromise = null;
 }
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const now = Date.now();
-  if (_cachedToken && _tokenExpiry > now + 30_000) {
-    return { "Content-Type": "application/json", Authorization: `Bearer ${_cachedToken}` };
-  }
-  const { data } = await supabase.auth.getSession();
+function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (data.session?.access_token) {
-    headers["Authorization"] = `Bearer ${data.session.access_token}`;
-    _cachedToken = data.session.access_token;
-    _tokenExpiry = (data.session.expires_at ?? 0) * 1000;
-  } else {
-    _cachedToken = null;
-    _tokenExpiry = 0;
-  }
+  if (_accessToken) headers.Authorization = `Bearer ${_accessToken}`;
   return headers;
 }
 
-// ─── Auth-aware retry wrapper ────────────────────────────────────────────────
-// On a 401, attempt a Supabase token refresh and replay the request once.
-// Multiple simultaneous 401s share a single refresh via _refreshPromise so
-// supabase.auth.refreshSession() is never called more than once concurrently.
-// • If the refresh itself fails  → session is truly expired → sign out + redirect.
-// • If the retry also returns 401 → role/permission denial, NOT an auth failure;
-//   re-throw as 403 so the component can surface an error without signing out.
-async function doRefresh(): Promise<boolean> {
+async function doRefresh(): Promise<void> {
   if (!_refreshPromise) {
-    _refreshPromise = supabase.auth
-      .refreshSession()
-      .then(({ error }) => !error)
-      // Network failure during refresh (e.g. offline) resolves as false rather
-      // than rejecting. withAuthRetry treats false → session gone → logout.
-      // Without this, a thrown network error would escape the catch block in
-      // withAuthRetry unhandled, bypassing the logout path entirely.
-      .catch(() => false)
-      .finally(() => { _refreshPromise = null; });
+    const pending = supabase.auth.refreshSession().then(({ error }) => {
+      if (!error) return;
+      if (error.name === "AuthRetryableFetchError") {
+        throw new ApiError("Could not refresh your session. Check your connection and try again.", 0, undefined, "NETWORK_ERROR");
+      }
+      throw new ApiError("Your session expired. Log in again.", 401);
+    }).finally(() => {
+      if (_refreshPromise === pending) _refreshPromise = null;
+    });
+    _refreshPromise = pending;
   }
   return _refreshPromise;
 }
 
 async function withAuthRetry<T>(fn: () => Promise<T>): Promise<T> {
+  const identityVersion = _identityVersion;
+  const accessToken = _accessToken;
   try {
     return await fn();
   } catch (err) {
-    if (!(err instanceof ApiError) || err.status !== 401) throw err;
-    // Token may be expired — try a silent refresh (deduplicated).
-    clearAuthTokenCache();
-    const refreshed = await doRefresh();
-    if (!refreshed) {
-      // Refresh failed: session is gone. Sign out and hard-navigate.
-      await supabase.auth.signOut();
-      if (typeof window !== "undefined") window.location.href = "/login";
-      throw err;
-    }
-    // Token refreshed — replay with the new credentials.
+    if (!(err instanceof ApiError) || err.status !== 401 || identityVersion !== _identityVersion || !_apiIdentity) throw err;
+    if (accessToken === _accessToken) await doRefresh();
+    if (identityVersion !== _identityVersion) throw err;
     try {
       return await fn();
     } catch (retryErr) {
@@ -97,11 +78,13 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), 15_000);
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const signal = options.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
+    const response = await fetch(url, { ...options, signal });
     clearTimeout(id);
     return response;
   } catch (err) {
     clearTimeout(id);
+    if (options.signal?.aborted) throw options.signal.reason;
     if (err instanceof Error && err.name === "AbortError") {
       throw new ApiError("Request timeout", 408, undefined, "TIMEOUT");
     }
@@ -116,10 +99,14 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
 }
 
 async function retryableFetch(url: string, options: RequestInit, maxRetries = 2): Promise<Response> {
+  const identityVersion = _identityVersion;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    options.signal?.throwIfAborted();
+    if (identityVersion !== _identityVersion) throw new ApiError("Your account changed. Try again.", 401);
     try {
       return await fetchWithTimeout(url, options);
     } catch (err) {
+      if (options.signal?.aborted) throw err;
       if (options.method && options.method !== "GET") throw err;
       if (attempt === maxRetries) throw err;
       await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
@@ -228,9 +215,26 @@ async function handlePaginatedResponse<T>(response: Response): Promise<Paginated
 export async function apiGet<T>(path: string, params?: Record<string, string>): Promise<T> {
   return withAuthRetry(async () => {
     const url = buildUrl(path, params);
-    const headers = await getAuthHeaders();
+    const headers = getAuthHeaders();
     const response = await retryableFetch(url, { method: "GET", headers });
     return handleResponse<T>(response);
+  });
+}
+
+export async function apiOpenEventStream(path: string, signal: AbortSignal): Promise<Response> {
+  return withAuthRetry(async () => {
+    const { Authorization } = getAuthHeaders();
+    if (!Authorization) throw new ApiError("Log in again to reconnect.", 401);
+    const response = await fetch(buildUrl(path), {
+      headers: { Authorization, Accept: "text/event-stream" },
+      signal,
+      cache: "no-store",
+    });
+    if (!response.ok || !response.headers.get("content-type")?.startsWith("text/event-stream") || !response.body) {
+      await response.body?.cancel();
+      throw new ApiError("Could not open the live event stream.", response.status);
+    }
+    return response;
   });
 }
 
@@ -242,7 +246,7 @@ export async function apiGet<T>(path: string, params?: Record<string, string>): 
 export async function apiGetValidated<T>(path: string, schema: ZodSchema<T>, params?: Record<string, string>): Promise<T> {
   return withAuthRetry(async () => {
     const url = buildUrl(path, params);
-    const headers = await getAuthHeaders();
+    const headers = getAuthHeaders();
     const response = await retryableFetch(url, { method: "GET", headers });
     return handleResponse<T>(response, schema);
   });
@@ -254,7 +258,7 @@ export async function apiGetEnvelope<T extends { success?: boolean; error?: stri
 ): Promise<T> {
   return withAuthRetry(async () => {
     const url = buildUrl(path, params);
-    const headers = await getAuthHeaders();
+    const headers = getAuthHeaders();
     const response = await retryableFetch(url, { method: "GET", headers });
     return parseEnvelopeOrThrow<T>(response);
   });
@@ -262,12 +266,13 @@ export async function apiGetEnvelope<T extends { success?: boolean; error?: stri
 
 export async function apiGetPaginated<T>(
   path: string,
-  params?: Record<string, string>
+  params?: Record<string, string>,
+  signal?: AbortSignal,
 ): Promise<PaginatedResponse<T>> {
   return withAuthRetry(async () => {
     const url = buildUrl(path, params);
-    const headers = await getAuthHeaders();
-    const response = await retryableFetch(url, { method: "GET", headers });
+    const headers = getAuthHeaders();
+    const response = await retryableFetch(url, { method: "GET", headers, signal });
     return handlePaginatedResponse<T>(response);
   });
 }
@@ -275,7 +280,7 @@ export async function apiGetPaginated<T>(
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return withAuthRetry(async () => {
     const url = buildUrl(path);
-    const headers = await getAuthHeaders();
+    const headers = getAuthHeaders();
     const response = await retryableFetch(url, {
       method: "POST",
       headers,
@@ -288,7 +293,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return withAuthRetry(async () => {
     const url = buildUrl(path);
-    const headers = await getAuthHeaders();
+    const headers = getAuthHeaders();
     const response = await retryableFetch(url, {
       method: "PATCH",
       headers,
@@ -301,7 +306,7 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
 export async function apiDelete<T = void>(path: string): Promise<T> {
   return withAuthRetry(async () => {
     const url = buildUrl(path);
-    const headers = await getAuthHeaders();
+    const headers = getAuthHeaders();
     const response = await retryableFetch(url, { method: "DELETE", headers });
     if (response.status === 204) {
       return undefined as T;

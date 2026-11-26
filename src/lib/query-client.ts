@@ -55,9 +55,9 @@ export const queryClient = new QueryClient({
     },
   }),
   mutationCache: new MutationCache({
-    onError(error) {
+    onError(error, _variables, _onMutateResult, mutation) {
       logErrorInDev("Mutation error", error);
-      if (shouldSuppressError(error)) return;
+      if (shouldSuppressError(error, mutation)) return;
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
       const code = error instanceof ApiError ? error.code : undefined;
       const requestId = error instanceof ApiError ? error.requestId : undefined;
@@ -73,8 +73,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
     mutations: {
-      retry: 1,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
+      retry: false,
     },
   },
 });

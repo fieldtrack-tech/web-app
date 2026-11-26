@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function EmployeeProfileCompatPage({ params }: { params: { id: string } }) {
-  redirect(`/admin/employees/${params.id}`);
+export default async function EmployeeProfileCompatPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  redirect(`/admin/employees/${id}`);
 }

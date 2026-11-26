@@ -16,7 +16,7 @@ import type { ReactNode } from "react";
  * the Supabase dashboard or service-role API.
  */
 export default async function AuditLogsDevLayout({ children }: { children: ReactNode }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,13 +25,13 @@ export default async function AuditLogsDevLayout({ children }: { children: React
   );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // app_metadata is set server-side only (not writable by the browser) so
   // this flag cannot be forged by a client.
   // Use explicit guard against undefined/null to prevent any edge cases.
-  const appMetadata = session?.user?.app_metadata as Record<string, unknown> | undefined;
+  const appMetadata = user?.app_metadata as Record<string, unknown> | undefined;
   const isDev = appMetadata?.is_dev === true;
 
   if (!isDev) {

@@ -6,16 +6,32 @@ import {
 } from "@tanstack/react-query";
 import { attendanceApi } from "@/lib/api/attendance";
 import { adminApi } from "@/lib/api/admin";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { rememberBrowserShift } from "@/lib/browser-location";
 import type { AttendanceSession, PaginatedResponse } from "@/types";
 
 export const sessionKeys = {
   all: ["sessions"] as const,
   mine: (page: number, limit: number, status: string) => ["sessions", "mine", page, limit, status] as const,
+  activeShift: (identityKey: string | null) => ["sessions", "active-shift", identityKey] as const,
   org: (page: number, limit: number, status: string) => ["sessions", "org", page, limit, status] as const,
   orgStatus: (status: string) => ["sessions", "org", "status", status] as const,
   detail: (id: string) => ["sessions", "detail", id] as const,
   employeeHistory: (employeeId: string) => ["sessions", "employee", employeeId] as const,
 };
+
+export function useActiveShift() {
+  const { identityKey, role } = useAuthContext();
+  return useQuery({
+    queryKey: sessionKeys.activeShift(identityKey),
+    queryFn: ({ signal }) => attendanceApi.mySessions(1, 1, "active", signal),
+    enabled: role === "EMPLOYEE",
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+    meta: { suppressGlobalError: true },
+  });
+}
 
 export function useMySessions(page = 1, limit = 50, status = "all") {
   return useQuery<PaginatedResponse<AttendanceSession>>({
@@ -125,103 +141,46 @@ export function useMySession(id: string) {
 
 export function useCheckIn() {
   const qc = useQueryClient();
+  const { identityKey } = useAuthContext();
   return useMutation({
     mutationFn: attendanceApi.checkIn,
-    onMutate: async () => {
-      // Cancel outgoing refetches to avoid overwriting optimistic update
-      await qc.cancelQueries({ queryKey: sessionKeys.all });
-
-      // Snapshot for rollback
-      const previousQueries = qc.getQueriesData({ queryKey: sessionKeys.all });
-
-      // Optimistically add a placeholder active session to "my sessions"
-      const now = new Date().toISOString();
-      const optimisticSession: AttendanceSession = {
-        id: `optimistic-${Date.now()}`,
-        employee_id: "",
-        organization_id: "",
-        checkin_at: now,
-        checkout_at: null,
-        total_distance_km: null,
-        total_duration_seconds: null,
-        distance_recalculation_status: null,
-        created_at: now,
-        updated_at: now,
-        activityStatus: "ACTIVE",
-      };
-
-      qc.setQueriesData(
-        { queryKey: ["sessions", "mine"] },
-        (old: unknown) => {
-          if (!old || typeof old !== "object") return old;
-          const page = old as { data?: AttendanceSession[] };
-          if (!Array.isArray(page.data)) return old;
-          return { ...page, data: [optimisticSession, ...page.data] };
-        },
-      );
-
-      return { previousQueries };
-    },
-    onError: (_err, _vars, context) => {
-      // Revert on failure
-      if (context?.previousQueries) {
-        for (const [key, data] of context.previousQueries) {
-          qc.setQueryData(key, data);
-        }
-      }
+    retry: false,
+    meta: { suppressGlobalError: true },
+    onSuccess: async (session) => {
+      await qc.cancelQueries({ queryKey: sessionKeys.activeShift(identityKey) });
+      rememberBrowserShift(session.id);
+      qc.setQueryData(sessionKeys.activeShift(identityKey), {
+        success: true,
+        data: [session],
+        pagination: { page: 1, limit: 1, total: 1, totalPages: 1 },
+      } satisfies PaginatedResponse<AttendanceSession>);
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: sessionKeys.all });
-      void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
-      void qc.invalidateQueries({ queryKey: ["employees"] });
+      void qc.invalidateQueries({ queryKey: ["field", "my-report"] });
     },
   });
 }
 
 export function useCheckOut() {
   const qc = useQueryClient();
+  const { identityKey } = useAuthContext();
   return useMutation({
     mutationFn: attendanceApi.checkOut,
-    onMutate: async () => {
-      // Cancel outgoing refetches to avoid overwriting optimistic update
-      await qc.cancelQueries({ queryKey: sessionKeys.all });
-
-      // Snapshot for rollback
-      const previousQueries = qc.getQueriesData({ queryKey: sessionKeys.all });
-
-      // Optimistically mark the active session as checked out
-      const now = new Date().toISOString();
-      qc.setQueriesData(
-        { queryKey: ["sessions", "mine"] },
-        (old: unknown) => {
-          if (!old || typeof old !== "object") return old;
-          const page = old as { data?: AttendanceSession[] };
-          if (!Array.isArray(page.data)) return old;
-          return {
-            ...page,
-            data: page.data.map((s) =>
-              !s.checkout_at
-                ? { ...s, checkout_at: now, activityStatus: "RECENT" as const }
-                : s,
-            ),
-          };
-        },
-      );
-
-      return { previousQueries };
-    },
-    onError: (_err, _vars, context) => {
-      // Revert on failure
-      if (context?.previousQueries) {
-        for (const [key, data] of context.previousQueries) {
-          qc.setQueryData(key, data);
-        }
-      }
+    retry: false,
+    meta: { suppressGlobalError: true },
+    onSuccess: async () => {
+      await qc.cancelQueries({ queryKey: sessionKeys.activeShift(identityKey) });
+      rememberBrowserShift(null);
+      qc.setQueryData(sessionKeys.activeShift(identityKey), {
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 1, total: 0, totalPages: 0 },
+      } satisfies PaginatedResponse<AttendanceSession>);
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: sessionKeys.all });
-      void qc.invalidateQueries({ queryKey: ["adminDashboard"] });
-      void qc.invalidateQueries({ queryKey: ["employees"] });
+      void qc.invalidateQueries({ queryKey: ["field", "my-report"] });
     },
   });
 }

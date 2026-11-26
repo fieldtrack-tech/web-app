@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = extractRoleFromSession(session, { allowUserMetadataFallback: false });
+  const role = extractRoleFromSession(session);
 
   // Authenticated shared pages are allowed for all roles.
   if (SHARED_AUTH_PATHS.some((p) => pathname.startsWith(p))) {

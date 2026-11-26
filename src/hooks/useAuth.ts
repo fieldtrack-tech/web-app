@@ -3,10 +3,8 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { clearAuthTokenCache } from "@/lib/api/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { extractRoleFromSession } from "@/lib/auth/role";
-import { queryClient } from "@/lib/query-client";
 import type { UserRole } from "@/types";
 
 export function useAuth() {
@@ -15,8 +13,6 @@ export function useAuth() {
 
   const login = useCallback(
     async (email: string, password: string): Promise<UserRole> => {
-      // Clear cached bearer to avoid stale cross-role token reuse
-      clearAuthTokenCache();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -24,15 +20,13 @@ export function useAuth() {
       if (error) throw error;
 
       if (!data.session) return "EMPLOYEE";
-      return extractRoleFromSession(data.session, { allowUserMetadataFallback: true });
+      return extractRoleFromSession(data.session);
     },
     []
   );
 
   const logout = useCallback(async () => {
-    clearAuthTokenCache();
     await supabase.auth.signOut();
-    queryClient.clear();
     router.push("/login");
   }, [router]);
 

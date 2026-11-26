@@ -3,13 +3,13 @@ import { API } from "@/lib/api/endpoints";
 import type { AuditLog, AttendanceSession, Employee, EmployeeProfileDetail, SearchResults } from "@/types";
 
 export const adminApi = {
-  employees: (page = 1, limit = 50, params: { search?: string; segment?: string } = {}) =>
+  employees: (page = 1, limit = 50, params: { search?: string; segment?: string } = {}, signal?: AbortSignal) =>
     apiGetPaginated<Employee>(API.listEmployees, {
       page: String(page),
       limit: String(limit),
       ...(params.search ? { search: params.search } : {}),
       ...(params.segment ? { segment: params.segment } : {}),
-    }),
+    }, signal),
 
   employee: (id: string) => apiGet<Employee>(API.getEmployee(id)),
 

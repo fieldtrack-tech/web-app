@@ -1,18 +1,19 @@
 import { apiGetPaginated, apiPost } from "@/lib/api/client";
 import { API } from "@/lib/api/endpoints";
 import type { AttendanceSession } from "@/types";
+import type { CameraCheckIn } from "./field-operations";
 
 export const attendanceApi = {
-  checkIn: () => apiPost<AttendanceSession>("/attendance/check-in", {}),
+  checkIn: (body: CameraCheckIn) => apiPost<AttendanceSession>("/attendance/check-in", body),
 
   checkOut: () => apiPost<AttendanceSession>("/attendance/check-out", {}),
 
-  mySessions: (page = 1, limit = 50, status = "all") =>
+  mySessions: (page = 1, limit = 50, status = "all", signal?: AbortSignal) =>
     apiGetPaginated<AttendanceSession>(API.sessions, {
       page: String(page),
       limit: String(limit),
       status,
-    }),
+    }, signal),
 
   orgSessions: (page = 1, limit = 50, status?: string) =>
     apiGetPaginated<AttendanceSession>(API.adminSessions, {

@@ -1,10 +1,12 @@
 "use client";
 
-import { useMySessions } from "@/hooks/queries/useSessions";
+import { useActiveShift } from "@/hooks/queries/useSessions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { CheckInCard } from "@/components/employee/CheckInCard";
+import { WorkSiteArrival } from "@/components/employee/WorkSiteArrival";
 import { SessionList } from "@/components/employee/SessionList";
 import { LoadingState } from "@/components/ui";
+import { ErrorBanner } from "@/components/ErrorBanner";
 import { useSessionRoute } from "@/hooks/queries/useLocations";
 import dynamic from "next/dynamic";
 import { formatKm, formatDuration } from "@/lib/utils";
@@ -27,7 +29,7 @@ function ActiveRouteSection({ sessionId }: { sessionId: string }) {
 
 export default function EmployeeHomePage() {
   const { user, profile, isProfileLoading: loadProfile } = useCurrentUser();
-  const { data: sessions, isLoading: loadSess } = useMySessions(1, 1);
+  const { data: sessions, isLoading: loadSess, error: shiftError } = useActiveShift();
 
   const activeSession = (sessions?.data ?? []).find((s) => !s.checkout_at) ?? null;
 
@@ -65,7 +67,10 @@ export default function EmployeeHomePage() {
       )}
 
       {/* Check-in card */}
-      {loadSess ? <LoadingState /> : <CheckInCard activeSession={activeSession} />}
+      {shiftError && <ErrorBanner error={shiftError} />}
+      {loadSess ? <LoadingState /> : sessions && <CheckInCard activeSession={activeSession} />}
+
+      {activeSession && <WorkSiteArrival key={activeSession.id} />}
 
       {/* Route map for active session */}
       {activeSession && <ActiveRouteSection sessionId={activeSession.id} />}

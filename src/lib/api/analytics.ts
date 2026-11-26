@@ -44,7 +44,7 @@ export const analyticsApi = {
 
   adminDashboard: () => apiGet<AdminDashboardData>(API.adminDashboard),
 
-  adminMap: () => apiGet<EmployeeMapMarker[]>(API.adminMap),
+  adminMap: (employeeId?: string) => apiGet<EmployeeMapMarker[]>(API.adminMap, employeeId ? { employeeId } : undefined),
 };
 
 function stringifyParams(

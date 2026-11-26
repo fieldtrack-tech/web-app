@@ -11,15 +11,16 @@ import { TopBar } from "@/components/layout/TopBar";
 import { Spinner } from "@/components/ui";
 import { SnapshotHealthBanner } from "@/components/admin/SnapshotHealthBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BrowserShiftTracking } from "@/components/employee/BrowserShiftTracking";
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
-  const { isLoading, role, user } = useAuth();
+  const { isLoading, role, user, session } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isAdmin = !isLoading && !!user && role === "ADMIN";
 
   // Real-time SSE: invalidate React Query caches on server-sent events (admin only)
-  useAdminSSE({ enabled: isAdmin });
+  useAdminSSE(isAdmin, session?.access_token);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -65,7 +66,9 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         <TopBar onMenuClick={() => setSidebarOpen((v) => !v)} />
         {isAdmin && <SnapshotHealthBanner />}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">
-          <ErrorBoundary>{children}</ErrorBoundary>
+          {role === "EMPLOYEE"
+            ? <BrowserShiftTracking><ErrorBoundary>{children}</ErrorBoundary></BrowserShiftTracking>
+            : <ErrorBoundary>{children}</ErrorBoundary>}
         </main>
       </div>
     </div>

@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Live Tracking", href: "/admin/tracking",    icon: MapPin },
   { label: "Monitoring",    href: "/admin/monitoring",  icon: Radar },
   { label: "Attendance",    href: "/admin/attendance",  icon: CalendarCheck },
+  { label: "Field & Payroll", href: "/admin/field",     icon: Receipt },
   { label: "Expenses",      href: "/admin/expenses",    icon: Receipt },
   { label: "Analytics",     href: "/admin/analytics",   icon: BarChart3 },
   { label: "API Keys",      href: "/admin/api-keys",    icon: KeyRound },

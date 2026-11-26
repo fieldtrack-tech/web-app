@@ -107,10 +107,13 @@ jobs:
           done
 
       - name: TypeScript check
-        run: npm run typecheck
+        run: npm run type-check
 
       - name: Dependency audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Verify field evidence and API proxy
+        run: npm run test:selfie && npm run test:proxy
 
   # -------------------------------------------------------------------
   # JOB: build

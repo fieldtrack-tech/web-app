@@ -37,22 +37,27 @@ function decodeBase64Url(input: string): string {
 export function extractRoleFromAccessToken(
   accessToken: string | null | undefined
 ): UserRole | undefined {
+  return toUserRole(accessTokenClaims(accessToken)?.role);
+}
+
+function accessTokenClaims(accessToken: string | null | undefined): Record<string, unknown> | undefined {
   if (!accessToken) return undefined;
 
   try {
     const parts = accessToken.split(".");
     if (parts.length < 2) return undefined;
-    const payload = JSON.parse(decodeBase64Url(parts[1])) as Record<string, unknown>;
-    return toUserRole(payload.role);
+    return JSON.parse(decodeBase64Url(parts[1])) as Record<string, unknown>;
   } catch {
     return undefined;
   }
 }
 
-export function extractRoleFromSession(
-  session: Session,
-  options: { allowUserMetadataFallback?: boolean } = {}
-): UserRole {
+export function sessionIdentityKey(session: Session): string {
+  const claims = accessTokenClaims(session.access_token);
+  return JSON.stringify([session.user.id, claims?.org_id, claims?.employee_id, extractRoleFromSession(session)]);
+}
+
+export function extractRoleFromSession(session: Session): UserRole {
   const claimRole = extractRoleFromAccessToken(session.access_token);
   if (claimRole) return claimRole;
 
@@ -60,13 +65,6 @@ export function extractRoleFromSession(
     (session.user.app_metadata as Record<string, unknown> | undefined)?.role
   );
   if (appMetaRole) return appMetaRole;
-
-  if (options.allowUserMetadataFallback) {
-    const userMetaRole = toUserRole(
-      (session.user.user_metadata as Record<string, unknown> | undefined)?.role
-    );
-    if (userMetaRole) return userMetaRole;
-  }
 
   return "EMPLOYEE";
 }
